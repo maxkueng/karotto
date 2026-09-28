@@ -1,3 +1,4 @@
+import { CLIENT_ID_HEADER } from '@karotto/core';
 import type { ApiErrorBody } from '@karotto/core';
 
 export class ApiRequestError extends Error {
@@ -21,7 +22,10 @@ export class ApiRequestError extends Error {
 
 export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-const BASE = '/api/v1';
+export const BASE = '/api/v1';
+
+/** Identifies this tab so its own changes can be told apart on the event stream. */
+export const CLIENT_ID = crypto.randomUUID();
 
 const unauthorizedListeners = new Set<() => void>();
 
@@ -40,7 +44,10 @@ export async function request<T>(
     {
       method,
       credentials: 'same-origin',
-      headers: body === undefined ? {} : { 'content-type': 'application/json' },
+      headers: {
+        [CLIENT_ID_HEADER]: CLIENT_ID,
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
       body: body === undefined ? null : JSON.stringify(body),
     },
   );

@@ -8,6 +8,7 @@ import com.karotto.app.data.api.ApiException
 import com.karotto.app.data.api.NetworkException
 import com.karotto.app.data.sync.SyncManager
 import com.karotto.app.domain.ActiveFilter
+import com.karotto.app.domain.Checklisted
 import com.karotto.app.domain.Daily
 import com.karotto.app.domain.DayContext
 import com.karotto.app.domain.Direction
@@ -26,9 +27,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonObject
 
 data class WelcomeBack(
     val yesterday: String,
@@ -37,7 +35,13 @@ data class WelcomeBack(
     val running: Boolean = false,
 )
 
-data class Notice(val text: String, val error: Boolean = false, val id: Long = System.nanoTime())
+data class Notice(
+    val text: String,
+    val error: Boolean = false,
+    val action: String? = null,
+    val onAction: (() -> Unit)? = null,
+    val id: Long = System.nanoTime(),
+)
 
 data class TasksState(
     val user: User? = null,
@@ -110,14 +114,15 @@ class TasksViewModel(private val container: AppContainer) : ViewModel() {
         remote,
         container.tasks.pendingCount,
         container.settings.haptics,
-    ) { state, (user, tasks, tags), pending, haptics ->
+        container.settings.activeFilter,
+    ) { state, (user, tasks, tags), pending, haptics, filter ->
         state.copy(
             user = user,
             tasks = tasks,
             tags = tags,
             pendingCount = pending,
             haptics = haptics,
-            filter = user?.preferences?.activeFilter ?: state.filter,
+            filter = filter,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TasksState())
 
@@ -211,6 +216,11 @@ class TasksViewModel(private val container: AppContainer) : ViewModel() {
     fun score(task: Task, direction: Direction) {
         viewModelScope.launch {
             container.tasks.score(task.id, direction)
+            if (task is Checklisted && direction == Direction.UP) {
+                local.update {
+                    it.copy(notice = Notice("Completed \u201c${task.text}\u201d", action = "Undo", onAction = { score(task, Direction.DOWN) }))
+                }
+            }
             if (!container.sync.push()) {
                 local.update { it.copy(offline = true) }
                 container.sync.schedulePush()
@@ -237,7 +247,7 @@ class TasksViewModel(private val container: AppContainer) : ViewModel() {
     fun move(type: TaskType, id: String, visibleTarget: Int) {
         val current = state.value
         val visible = current.visible(type).map { it.id }.filter { it != id }
-        val all = current.tasks.filter { it.type == type && !((it as? Todo)?.completed ?: false) }
+        val all = current.tasks.filter { it.type == type && (it as? Checklisted)?.completed != true }
             .sortedWith(compareBy<Task> { it.position }.thenByDescending { it.createdAt })
             .map { it.id }
             .filter { it != id }
@@ -257,26 +267,9 @@ class TasksViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun setFilter(type: TaskType, value: String) {
-        val user = state.value.user ?: return
-        val filter = when (type) {
-            TaskType.HABIT -> user.preferences.activeFilter.copy(habit = value)
-            TaskType.DAILY -> user.preferences.activeFilter.copy(daily = value)
-            TaskType.TODO -> user.preferences.activeFilter.copy(todo = value)
-        }
         viewModelScope.launch {
-            container.settings.saveUser(user.copy(preferences = user.preferences.copy(activeFilter = filter)))
+            container.settings.setFilter(type, value)
             if (type == TaskType.TODO && value == "complete") runCatching { container.tasks.refreshCompleted() }
-            runCatching {
-                container.users.updatePreferences(
-                    buildJsonObject {
-                        putJsonObject("activeFilter") {
-                            put("habit", filter.habit)
-                            put("daily", filter.daily)
-                            put("todo", filter.todo)
-                        }
-                    },
-                )
-            }
         }
     }
 

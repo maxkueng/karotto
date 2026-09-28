@@ -70,6 +70,13 @@ type TasksApi = {
   ) => Promise<void>;
   clearCompleted: () => Promise<void>;
   find: (id: string) => Task | undefined;
+  applyRemote: (task: Task) => void;
+  removeRemote: (id: string) => void;
+  applyRemoteOrder: (
+    type: TaskType,
+    ids: string[],
+  ) => void;
+  reload: () => Promise<void>;
 };
 
 const TasksContext = createContext<TasksApi>();
@@ -308,7 +315,9 @@ export const TasksProvider: ParentComponent = (props) => {
     if (!task) {
       return;
     }
-    const ids = state.tasks.filter((item) => item.type === task.type && item.id !== id).map((item) => item.id);
+    const ids = state.tasks
+      .filter((item) => item.type === task.type && item.id !== id && !(item.type !== 'habit' && item.completed))
+      .map((item) => item.id);
     const target = position === -1 || position > ids.length ? ids.length : position;
     ids.splice(
       target,
@@ -401,6 +410,20 @@ export const TasksProvider: ParentComponent = (props) => {
     );
   };
 
+  const removeRemote = (id: string) => {
+    setState(produce((draft) => {
+      draft.tasks = draft.tasks.filter((task) => task.id !== id);
+      draft.completedTodos = draft.completedTodos.filter((task) => task.id !== id);
+    }));
+  };
+
+  const reload = async () => {
+    await Promise.all([
+      load(),
+      state.completedLoaded ? loadCompleted() : Promise.resolve(),
+    ]);
+  };
+
   return (
     <TasksContext.Provider value={{
       state,
@@ -420,6 +443,10 @@ export const TasksProvider: ParentComponent = (props) => {
       setCollapsed,
       clearCompleted,
       find,
+      applyRemote: replaceTask,
+      removeRemote,
+      applyRemoteOrder: applyOrder,
+      reload,
     }}
     >
       {props.children}

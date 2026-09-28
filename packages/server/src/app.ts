@@ -18,6 +18,7 @@ import type { AppContext } from '@/context';
 import { ApiError } from '@/lib/errors';
 import { authRoutes } from '@/routes/auth';
 import { cronRoutes } from '@/routes/cron';
+import { eventRoutes } from '@/routes/events';
 import { tagRoutes } from '@/routes/tags';
 import { taskRoutes } from '@/routes/tasks';
 import { userRoutes } from '@/routes/user';
@@ -169,6 +170,10 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
       );
       await api.register(
         cronRoutes,
+        ctx,
+      );
+      await api.register(
+        eventRoutes,
         ctx,
       );
     },

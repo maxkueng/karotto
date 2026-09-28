@@ -105,6 +105,14 @@ const variants = {
         ...textLinkStyles,
         'text-current',
       ],
+      'snackbar-action': [
+        ...textLinkStyles,
+        'text-white',
+        'font-bold',
+        'uppercase',
+        'tracking-wide',
+        'text-[12px]',
+      ],
       icon: [
         ...iconStyles,
         'hover:text-purple-300',

@@ -41,8 +41,10 @@ import { useNotifications } from '@/stores/notifications';
 import { useSession } from '@/stores/session';
 import { useTasks } from '@/stores/tasks';
 import {
+  activeFilter,
   searchQuery,
   selectedTagIds,
+  setActiveFilter,
 } from '@/stores/ui';
 
 type FilterOption<T extends TaskType> = {
@@ -101,13 +103,15 @@ type TaskColumnProps = {
   onDelete: (task: Task) => void;
 };
 
+const UNDO_MS = 6000;
+
 export function TaskColumn(props: TaskColumnProps) {
   const session = useSession();
   const tasks = useTasks();
   const notifications = useNotifications();
 
   const meta = () => taskTypes[props.type];
-  const filter = createMemo<ActiveFilter[TaskType]>(() => session.user()?.preferences.activeFilter[props.type] ?? 'all');
+  const filter = createMemo<ActiveFilter[TaskType]>(() => activeFilter()[props.type]);
   const isCompleteFilter = () => props.type === 'todo' && filter() === 'complete';
   const isScheduledFilter = () => props.type === 'todo' && filter() === 'scheduled';
 
@@ -172,7 +176,10 @@ export function TaskColumn(props: TaskColumnProps) {
   });
 
   const setFilter = (value: ActiveFilter[TaskType]) => {
-    session.updatePreferences({ activeFilter: { [props.type]: value } as Partial<ActiveFilter> }).catch(notifications.error);
+    setActiveFilter(
+      props.type,
+      value,
+    );
   };
 
   const submitQuickAdd = async () => {
@@ -202,7 +209,25 @@ export function TaskColumn(props: TaskColumnProps) {
     tasks.score(
       task.id,
       direction,
-    ).catch(notifications.error);
+    ).then(() => {
+      if (task.type === 'habit' || direction !== 'up') {
+        return;
+      }
+      notifications.notify(
+        'success',
+        `Completed “${task.text}”`,
+        {
+          durationMs: UNDO_MS,
+          action: {
+            label: 'Undo',
+            run: () => tasks.score(
+              task.id,
+              'down',
+            ).catch(notifications.error),
+          },
+        },
+      );
+    }).catch(notifications.error);
   };
 
   const moveTo = (

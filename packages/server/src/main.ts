@@ -5,6 +5,7 @@ import {
 } from '@/config';
 import { createDb } from '@/db/client';
 import { systemClock } from '@/lib/clock';
+import { EventHub } from '@/services/events';
 
 async function main(): Promise<void> {
   loadDotEnv();
@@ -20,6 +21,7 @@ async function main(): Promise<void> {
     db: handle.db,
     clock: systemClock,
     config,
+    events: new EventHub(),
   });
 
   const shutdown = async () => {

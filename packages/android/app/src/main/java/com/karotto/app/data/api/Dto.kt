@@ -7,6 +7,7 @@ import com.karotto.app.domain.Habit
 import com.karotto.app.domain.HabitFrequency
 import com.karotto.app.domain.Reminder
 import com.karotto.app.domain.Repeat
+import com.karotto.app.domain.Tag
 import com.karotto.app.domain.Task
 import com.karotto.app.domain.TaskType
 import com.karotto.app.domain.Todo
@@ -143,6 +144,19 @@ data class TokenCreatedDto(
 
 @Serializable
 data class DeletedCountDto(val deleted: Int)
+
+/** One SSE `data:` payload; which fields are set depends on [type]. */
+@Serializable
+data class ServerEventDto(
+    val type: String,
+    val origin: String? = null,
+    val task: TaskDto? = null,
+    val id: String? = null,
+    val taskType: String? = null,
+    val ids: List<String>? = null,
+    val tags: List<Tag>? = null,
+    val user: User? = null,
+)
 
 /** Free-form patch bodies are sent as JSON objects built by the caller. */
 typealias JsonBody = Map<String, JsonElement>

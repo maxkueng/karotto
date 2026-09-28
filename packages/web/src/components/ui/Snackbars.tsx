@@ -1,5 +1,9 @@
 import X from 'lucide-solid/icons/x';
-import { For } from 'solid-js';
+import {
+  For,
+  Show,
+} from 'solid-js';
+import { Button } from '@/components/ui/Button';
 import { useNotifications } from '@/stores/notifications';
 import { twc } from '@/styles/twc';
 
@@ -8,14 +12,15 @@ const SnackbarStack = twc(
   [
     'pointer-events-none',
     'fixed',
-    'right-[10px]',
-    'top-[66px]',
+    'bottom-4',
+    'left-1/2',
+    '-translate-x-1/2',
     'z-[999]',
     'flex',
     'w-[350px]',
     'max-w-[calc(100%-20px)]',
-    'flex-col',
-    'items-end',
+    'flex-col-reverse',
+    'items-center',
   ],
 );
 
@@ -24,8 +29,8 @@ const Snackbar = twc(
   [
     'pointer-events-auto',
     'relative',
-    'mb-2',
-    'max-w-[330px]',
+    'mt-2',
+    'w-full',
     'cursor-pointer',
     'rounded-sm',
     'px-4',
@@ -66,6 +71,15 @@ const SnackbarText = twc(
   ],
 );
 
+const SnackbarAction = twc(
+  'div',
+  [
+    'mt-2',
+    'flex',
+    'justify-end',
+  ],
+);
+
 const SnackbarClose = twc(
   X,
   [
@@ -88,6 +102,22 @@ export function Snackbars() {
           >
             <SnackbarTitle>karotto</SnackbarTitle>
             <SnackbarText>{item.text}</SnackbarText>
+            <Show when={item.action}>
+              {(action) => (
+                <SnackbarAction>
+                  <Button
+                    layout="snackbar-action"
+                    size="sm"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      action().run();
+                    }}
+                  >
+                    {action().label}
+                  </Button>
+                </SnackbarAction>
+              )}
+            </Show>
             <SnackbarClose size={12} />
           </Snackbar>
         )}

@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.karotto.app.domain.ActiveFilter
+import com.karotto.app.domain.TaskType
 import com.karotto.app.domain.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -31,6 +33,9 @@ class Settings(private val context: Context, private val secure: SecureStore) {
         val themeMode = stringPreferencesKey("theme_mode")
         val haptics = booleanPreferencesKey("haptics")
         val lastCronCheck = longPreferencesKey("last_cron_check")
+        val filterHabit = stringPreferencesKey("filter_habit")
+        val filterDaily = stringPreferencesKey("filter_daily")
+        val filterTodo = stringPreferencesKey("filter_todo")
     }
 
     val session: Flow<Session?> = context.dataStore.data.map { prefs ->
@@ -82,6 +87,25 @@ class Settings(private val context: Context, private val secure: SecureStore) {
 
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { it[Keys.themeMode] = mode.name }
+    }
+
+    /** Per-device list views, as in Habitica; deliberately not synced through the server. */
+    val activeFilter: Flow<ActiveFilter> = context.dataStore.data.map { prefs ->
+        val defaults = ActiveFilter()
+        ActiveFilter(
+            habit = prefs[Keys.filterHabit] ?: defaults.habit,
+            daily = prefs[Keys.filterDaily] ?: defaults.daily,
+            todo = prefs[Keys.filterTodo] ?: defaults.todo,
+        )
+    }
+
+    suspend fun setFilter(type: TaskType, value: String) {
+        val key = when (type) {
+            TaskType.HABIT -> Keys.filterHabit
+            TaskType.DAILY -> Keys.filterDaily
+            TaskType.TODO -> Keys.filterTodo
+        }
+        context.dataStore.edit { it[key] = value }
     }
 
     val haptics: Flow<Boolean> = context.dataStore.data.map { it[Keys.haptics] ?: true }

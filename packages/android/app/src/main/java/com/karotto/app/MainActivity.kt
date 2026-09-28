@@ -48,6 +48,8 @@ class MainActivity : ComponentActivity() {
                 LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
                     lifecycleScope.launch { container.rescheduleReminders() }
                 }
+                LifecycleEventEffect(Lifecycle.Event.ON_START) { container.live.start() }
+                LifecycleEventEffect(Lifecycle.Event.ON_STOP) { container.live.stop() }
             }
             ready = true
         }

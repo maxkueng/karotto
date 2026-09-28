@@ -10,6 +10,7 @@ import {
   cronStatus,
   runCron,
 } from '@/services/cron';
+import { originOf } from '@/services/events';
 import { serializeUser } from '@/services/users';
 
 export const cronRoutes: FastifyPluginAsyncZod<AppContext> = async (
@@ -55,13 +56,30 @@ export const cronRoutes: FastifyPluginAsyncZod<AppContext> = async (
           now,
         },
       );
+      const user = serializeUser(
+        result.user,
+        now,
+      );
+      if (result.ran) {
+        const origin = originOf(request);
+        ctx.events.publish(
+          user.id,
+          { type: 'tasks.invalidated' },
+          origin,
+        );
+        ctx.events.publish(
+          user.id,
+          {
+            type: 'user.updated',
+            user,
+          },
+          origin,
+        );
+      }
       return {
         ran: result.ran,
         daysMissed: result.daysMissed,
-        user: serializeUser(
-          result.user,
-          now,
-        ),
+        user,
       };
     },
   );

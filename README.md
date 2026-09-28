@@ -82,6 +82,17 @@ tasks before the web app has been opened should call it first. `GET
 /api/v1/cron/status` tells you whether a rollover is pending and which dailies
 were due yesterday.
 
+Live updates: `GET /api/v1/events` is a Server-Sent Events stream of changes to
+the caller's data (`task.upserted`, `task.deleted`, `tasks.reordered`,
+`tasks.invalidated`, `tags.changed`, `user.updated`). Send an `X-Client-Id`
+header on mutating requests and the same value is echoed as `origin` on each
+event, so a client can skip its own changes. The web app and the Android app
+subscribe while open; a wall dashboard only needs the web app.
+
+```sh
+curl -N -H "Authorization: Bearer krt_..." http://localhost:3210/api/v1/events
+```
+
 ## CLI
 
 ```

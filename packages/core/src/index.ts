@@ -4,6 +4,7 @@ export * from '@karotto/core/rollover';
 export * from '@karotto/core/schedule';
 export * from '@karotto/core/schemas/api';
 export * from '@karotto/core/schemas/common';
+export * from '@karotto/core/schemas/events';
 export * from '@karotto/core/schemas/tag';
 export * from '@karotto/core/schemas/task';
 export * from '@karotto/core/schemas/user';

@@ -9,6 +9,7 @@ import com.karotto.app.data.repo.UserRepository
 import com.karotto.app.data.store.SecureStore
 import com.karotto.app.data.store.Settings
 import com.karotto.app.data.store.Session
+import com.karotto.app.data.sync.LiveUpdates
 import com.karotto.app.data.sync.SyncManager
 import com.karotto.app.reminders.ReminderScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 /** Hand-wired dependency graph; small enough not to need a DI framework. */
 class AppContainer(context: Context) {
@@ -25,13 +27,15 @@ class AppContainer(context: Context) {
     val secure = SecureStore(context)
     val settings = Settings(context, secure)
     val session: StateFlow<Session?> = settings.session.stateIn(scope, SharingStarted.Eagerly, null)
-    val api = ApiClient { session.value?.let { ApiClient.Credentials(it.serverUrl, it.token) } }
+    val clientId: String = UUID.randomUUID().toString()
+    val api = ApiClient({ session.value?.let { ApiClient.Credentials(it.serverUrl, it.token) } }, clientId)
     val db = KarottoDatabase.create(context)
     val reminders = ReminderScheduler(context)
     val users = UserRepository(api, settings)
     val tasks = TaskRepository(api, db, settings) { scope.launch { rescheduleReminders() } }
     val tags = TagRepository(api, db)
     val sync = SyncManager(context, settings, users, tasks, tags)
+    val live = LiveUpdates(api, settings, tasks, tags, scope) { sync.sync() }
 
     suspend fun rescheduleReminders() {
         val user = settings.currentUser() ?: return
@@ -41,6 +45,7 @@ class AppContainer(context: Context) {
     }
 
     suspend fun signOut() {
+        live.stop()
         reminders.cancelAll(db.tasks().all().map { it.id })
         tasks.clearLocal()
         tags.clearLocal()

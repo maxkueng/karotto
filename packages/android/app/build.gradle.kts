@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime)
     implementation(libs.okhttp)
+    implementation(libs.okhttp.sse)
     implementation(libs.serialization.json)
     implementation(libs.coroutines.android)
     implementation(libs.security.crypto)

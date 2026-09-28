@@ -1,5 +1,4 @@
 import type {
-  ActiveFilter,
   ChecklistItem,
   Reminder,
   Repeat,
@@ -56,11 +55,6 @@ export const users = pgTable(
     dayStart: smallint('day_start').notNull().default(0),
     timezone: text('timezone').notNull().default('UTC'),
     dateFormat: text('date_format').notNull().default('MM/dd/yyyy'),
-    activeFilter: jsonb('active_filter').$type<ActiveFilter>().notNull().default({
-      habit: 'all',
-      daily: 'due',
-      todo: 'active',
-    }),
     completedTodoRetentionDays: integer('completed_todo_retention_days').default(30),
     ...timestamps,
   },

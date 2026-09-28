@@ -13,6 +13,7 @@ import {
 import { loadConfig } from '@/config';
 import type { DbHandle } from '@/db/client';
 import { createTestDb } from '@/db/testDb';
+import { EventHub } from '@/services/events';
 import { createUser } from '@/services/users';
 
 let handle: DbHandle;
@@ -65,6 +66,7 @@ beforeAll(async () => {
       DATABASE_URL: 'unused',
       LOG_LEVEL: 'silent',
     }),
+    events: new EventHub(),
   });
   await app.ready();
 });
@@ -827,6 +829,91 @@ describe(
         );
         expect(status).toBe(200);
         expect(Object.keys(body?.paths as Json)).toContain('/api/v1/tasks/{id}/score/{direction}');
+      },
+    );
+  },
+);
+
+describe(
+  'events',
+  () => {
+    it(
+      'streams changes made by other clients and marks the origin',
+      async () => {
+        const address = await app.listen({
+          host: '127.0.0.1',
+          port: 0,
+        });
+        const login = await call(
+          'POST',
+          '/auth/token',
+          {
+            username: 'max',
+            password: 'correct horse battery',
+            name: 'events test',
+          },
+        );
+        expect(login.status).toBe(201);
+        const token = (login.body as { token: string }).token;
+        const bearer = { authorization: `Bearer ${token}` };
+        const created = await call(
+          'POST',
+          '/tasks',
+          {
+            type: 'habit',
+            text: 'streamed',
+          },
+          bearer,
+        );
+        expect(created.status).toBe(201);
+        const taskId = (created.body as { id: string }).id;
+        const controller = new AbortController();
+        const response = await fetch(
+          `${address}/api/v1/events`,
+          {
+            headers: { authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          },
+        );
+        expect(response.headers.get('content-type')).toContain('text/event-stream');
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let received = '';
+        const readUntil = async (marker: string) => {
+          while (!received.includes(marker)) {
+            const chunk = await reader.read();
+            if (chunk.done) {
+              break;
+            }
+            received += decoder.decode(chunk.value);
+          }
+        };
+        await readUntil(': connected');
+        const scored = await call(
+          'POST',
+          `/tasks/${taskId}/score/up`,
+          undefined,
+          {
+            ...bearer,
+            'x-client-id': 'web-abc',
+          },
+        );
+        expect(scored.status).toBe(200);
+        await readUntil('event: task.upserted');
+        const data = received.split('\n').find((line) => line.startsWith('data: '));
+        const event = JSON.parse(data!.slice('data: '.length)) as {
+          type: string;
+          origin: string;
+          task: {
+            id: string;
+            counterUp: number;
+          };
+        };
+        expect(event.origin).toBe('web-abc');
+        expect(event.task.id).toBe(taskId);
+        expect(event.task.counterUp).toBe(1);
+        controller.abort();
+        await reader.cancel().catch(() => undefined);
       },
     );
   },

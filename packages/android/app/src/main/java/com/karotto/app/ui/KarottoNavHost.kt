@@ -40,6 +40,7 @@ fun KarottoNavHost(container: AppContainer, navController: NavHostController, si
     ) {
         composable<LoginRoute> {
             LoginScreen(container) {
+                container.live.start()
                 navController.navigate(TasksRoute) { popUpTo(LoginRoute) { inclusive = true } }
             }
         }

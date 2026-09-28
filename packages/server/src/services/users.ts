@@ -1,6 +1,5 @@
 import {
   daysMissedSince,
-  defaultActiveFilter,
 } from '@karotto/core';
 import type {
   DateFormat,
@@ -37,10 +36,6 @@ export function preferencesOf(user: UserRow): Preferences {
     dayStart: user.dayStart,
     timezone: user.timezone,
     dateFormat: user.dateFormat as DateFormat,
-    activeFilter: {
-      ...defaultActiveFilter,
-      ...user.activeFilter,
-    },
     completedTodoRetentionDays: user.completedTodoRetentionDays,
   };
 }
@@ -185,14 +180,6 @@ export async function updatePreferences(
   }
   if (patch.completedTodoRetentionDays !== undefined) {
     values.completedTodoRetentionDays = patch.completedTodoRetentionDays;
-  }
-  if (patch.activeFilter !== undefined) {
-    const current = preferencesOf(user).activeFilter;
-    values.activeFilter = {
-      habit: patch.activeFilter.habit ?? current.habit,
-      daily: patch.activeFilter.daily ?? current.daily,
-      todo: patch.activeFilter.todo ?? current.todo,
-    };
   }
   if (patch.dayStart !== undefined && patch.dayStart !== user.dayStart) {
     values.dayStart = patch.dayStart;

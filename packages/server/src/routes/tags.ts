@@ -6,10 +6,12 @@ import {
   tagUpdateSchema,
   uuidParamsSchema,
 } from '@karotto/core';
+import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { currentUser } from '@/auth/plugin';
 import type { AppContext } from '@/context';
+import { originOf } from '@/services/events';
 import {
   createTag,
   deleteTag,
@@ -27,6 +29,21 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
     'preHandler',
     app.requireAuth,
   );
+
+  const emitTags = async (request: FastifyRequest) => {
+    const userId = currentUser(request).id;
+    ctx.events.publish(
+      userId,
+      {
+        type: 'tags.changed',
+        tags: (await listTags(
+          ctx.db,
+          userId,
+        )).map(serializeTag),
+      },
+      originOf(request),
+    );
+  };
 
   app.get(
     '/tags',
@@ -62,6 +79,7 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
         ctx.clock(),
       );
       reply.status(201);
+      await emitTags(request);
       return serializeTag(row);
     },
   );
@@ -76,13 +94,17 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
         response: { 200: tagSchema },
       },
     },
-    async (request) => serializeTag(await updateTag(
-      ctx.db,
-      currentUser(request).id,
-      request.params.id,
-      request.body.name,
-      ctx.clock(),
-    )),
+    async (request) => {
+      const row = await updateTag(
+        ctx.db,
+        currentUser(request).id,
+        request.params.id,
+        request.body.name,
+        ctx.clock(),
+      );
+      await emitTags(request);
+      return serializeTag(row);
+    },
   );
 
   app.delete(
@@ -100,6 +122,7 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
         currentUser(request).id,
         request.params.id,
       );
+      await emitTags(request);
       return { ok: true as const };
     },
   );
@@ -113,10 +136,14 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
         response: { 200: z.array(tagSchema) },
       },
     },
-    async (request) => (await reorderTags(
-      ctx.db,
-      currentUser(request).id,
-      request.body.ids,
-    )).map(serializeTag),
+    async (request) => {
+      const rows = await reorderTags(
+        ctx.db,
+        currentUser(request).id,
+        request.body.ids,
+      );
+      await emitTags(request);
+      return rows.map(serializeTag);
+    },
   );
 };

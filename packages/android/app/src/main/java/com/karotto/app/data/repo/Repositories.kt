@@ -80,6 +80,20 @@ class TaskRepository(
         db.tasks().upsert(entity(dto))
     }
 
+    /** Server-pushed state wins unless a local score for the task is still waiting to be sent. */
+    suspend fun applyRemote(dto: TaskDto) {
+        if (db.pendingScores().all().any { it.taskId == dto.id }) return
+        save(dto)
+        onLocalChange()
+    }
+
+    suspend fun removeLocal(id: String) {
+        db.tasks().delete(id)
+        onLocalChange()
+    }
+
+    suspend fun applyRemoteOrder(ids: List<String>) = applyOrder(ids)
+
     suspend fun create(bodies: List<JsonObject>): List<Task> {
         val created = api.createTasks(bodies)
         val type = created.firstOrNull()?.type
@@ -233,6 +247,10 @@ class TagRepository(private val api: ApiClient, private val db: KarottoDatabase)
     }
 
     suspend fun clearLocal() = db.tags().deleteAll()
+
+    suspend fun replaceLocal(list: List<Tag>) {
+        db.tags().replaceAll(list.map { TagEntity(it.id, it.name, it.position) })
+    }
 }
 
 class UserRepository(private val api: ApiClient, private val settings: Settings) {

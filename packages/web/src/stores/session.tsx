@@ -40,6 +40,7 @@ type SessionApi = {
   logout: () => Promise<void>;
   refresh: () => Promise<User | null>;
   updatePreferences: (patch: PreferencesUpdate) => Promise<void>;
+  applyRemote: (user: User) => void;
 };
 
 const SessionContext = createContext<SessionApi>();
@@ -144,6 +145,7 @@ export const SessionProvider: ParentComponent = (props) => {
       logout,
       refresh,
       updatePreferences,
+      applyRemote: apply,
     }}
     >
       {props.children}

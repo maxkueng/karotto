@@ -22,6 +22,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/*.tsbuildinfo',
       '**/drizzle/**',
+      'packages/android/**',
     ],
   },
   ...tseslint.configs.recommended,

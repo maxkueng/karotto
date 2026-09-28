@@ -22,6 +22,7 @@ type TagsApi = {
   remove: (id: string) => Promise<void>;
   reorder: (ids: string[]) => Promise<void>;
   byId: (id: string) => Tag | undefined;
+  applyRemote: (list: Tag[]) => void;
 };
 
 const TagsContext = createContext<TagsApi>();
@@ -78,6 +79,7 @@ export const TagsProvider: ParentComponent = (props) => {
     <TagsContext.Provider value={{
       tags,
       load,
+      applyRemote: setTags,
       create,
       rename,
       remove,

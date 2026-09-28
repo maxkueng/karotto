@@ -11,10 +11,21 @@ import { ApiRequestError } from '@/api/client';
 
 export type NotificationType = 'error' | 'success' | 'info';
 
+export type NotificationAction = {
+  label: string;
+  run: () => void;
+};
+
 export type Notification = {
   id: number;
   type: NotificationType;
   text: string;
+  action?: NotificationAction;
+};
+
+export type NotifyOptions = {
+  action?: NotificationAction;
+  durationMs?: number;
 };
 
 type NotificationsApi = {
@@ -22,6 +33,7 @@ type NotificationsApi = {
   notify: (
     type: NotificationType,
     text: string,
+    options?: NotifyOptions,
   ) => void;
   error: (error: unknown, fallback?: string) => void;
   dismiss: (id: number) => void;
@@ -45,21 +57,32 @@ export const NotificationsProvider: ParentComponent = (props) => {
   const notify = (
     type: NotificationType,
     text: string,
+    options: NotifyOptions = {},
   ) => {
     const id = nextId;
     nextId += 1;
+    const action = options.action
+      ? {
+          label: options.action.label,
+          run: () => {
+            dismiss(id);
+            options.action?.run();
+          },
+        }
+      : undefined;
     setItems((list) => [
       ...list.slice(-3),
       {
         id,
         type,
         text,
+        ...(action ? { action } : {}),
       },
     ]);
     if (type !== 'error') {
       setTimeout(
         () => dismiss(id),
-        AUTO_DISMISS_MS,
+        options.durationMs ?? AUTO_DISMISS_MS,
       );
     }
   };

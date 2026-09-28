@@ -13,6 +13,7 @@ import { Snackbars } from '@/components/ui/Snackbars';
 import { LoginPage } from '@/pages/LoginPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { TasksPage } from '@/pages/TasksPage';
+import { LiveProvider } from '@/stores/live';
 import { NotificationsProvider } from '@/stores/notifications';
 import {
   SessionProvider,
@@ -56,8 +57,10 @@ function Shell(props: RouteSectionProps) {
       <Match when={session.status() === 'authenticated'}>
         <TagsProvider>
           <TasksProvider>
-            <Navbar />
-            <Main>{props.children}</Main>
+            <LiveProvider>
+              <Navbar />
+              <Main>{props.children}</Main>
+            </LiveProvider>
           </TasksProvider>
         </TagsProvider>
       </Match>

@@ -16,13 +16,18 @@ import {
   updateSchemaFor,
   uuidSchema,
 } from '@karotto/core';
-import type { TaskUpdateFor } from '@karotto/core';
+import type {
+  Task,
+  TaskType,
+  TaskUpdateFor,
+} from '@karotto/core';
 import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { currentUser } from '@/auth/plugin';
 import type { AppContext } from '@/context';
 import { ApiError } from '@/lib/errors';
+import { originOf } from '@/services/events';
 import { listHistory } from '@/services/history';
 import { serializeHistory } from '@/services/serialize';
 import {
@@ -63,6 +68,38 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     'preHandler',
     app.requireAuth,
   );
+
+  const emitTask = (
+    request: FastifyRequest,
+    task: Task,
+  ) => {
+    ctx.events.publish(
+      currentUser(request).id,
+      {
+        type: 'task.upserted',
+        task,
+      },
+      originOf(request),
+    );
+    return task;
+  };
+
+  const emitOrder = (
+    request: FastifyRequest,
+    taskType: TaskType,
+    ids: string[],
+  ) => {
+    ctx.events.publish(
+      currentUser(request).id,
+      {
+        type: 'tasks.reordered',
+        taskType,
+        ids,
+      },
+      originOf(request),
+    );
+    return { ids };
+  };
 
   const loadTask = async (request: FastifyRequest<{ Params: { id: string } }>) => {
     const user = currentUser(request);
@@ -123,6 +160,10 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         ctx.clock(),
       );
       reply.status(201);
+      created.forEach((task) => emitTask(
+        request,
+        task,
+      ));
       if (Array.isArray(request.body)) {
         return created;
       }
@@ -143,14 +184,19 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         response: { 200: bulkScoreResultSchema },
       },
     },
-    async (request) => ({
-      results: await scoreTasks(
+    async (request) => {
+      const results = await scoreTasks(
         ctx.db,
         currentUser(request),
         request.body.scores,
         ctx.clock(),
-      ),
-    }),
+      );
+      results.forEach((result) => emitTask(
+        request,
+        result.task,
+      ));
+      return { results };
+    },
   );
 
   app.put(
@@ -162,14 +208,16 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         response: { 200: z.object({ ids: z.array(uuidSchema) }) },
       },
     },
-    async (request) => ({
-      ids: await setOrder(
+    async (request) => emitOrder(
+      request,
+      request.body.type,
+      await setOrder(
         ctx.db,
         currentUser(request),
         request.body.type,
         request.body.ids,
       ),
-    }),
+    ),
   );
 
   app.post(
@@ -180,12 +228,18 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         response: { 200: z.object({ deleted: z.number().int() }) },
       },
     },
-    async (request) => ({
-      deleted: await deleteCompletedTodos(
+    async (request) => {
+      const deleted = await deleteCompletedTodos(
         ctx.db,
         currentUser(request).id,
-      ),
-    }),
+      );
+      ctx.events.publish(
+        currentUser(request).id,
+        { type: 'tasks.invalidated' },
+        originOf(request),
+      );
+      return { deleted };
+    },
   );
 
   app.get(
@@ -236,12 +290,15 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
           parsed.error.issues,
         );
       }
-      return updateTask(
-        ctx.db,
-        user,
-        row,
-        parsed.data as TaskUpdateFor<typeof row.type>,
-        ctx.clock(),
+      return emitTask(
+        request,
+        await updateTask(
+          ctx.db,
+          user,
+          row,
+          parsed.data as TaskUpdateFor<typeof row.type>,
+          ctx.clock(),
+        ),
       );
     },
   );
@@ -260,6 +317,14 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
       await deleteTask(
         ctx.db,
         row,
+      );
+      ctx.events.publish(
+        currentUser(request).id,
+        {
+          type: 'task.deleted',
+          id: row.id,
+        },
+        originOf(request),
       );
       return { ok: true as const };
     },
@@ -292,6 +357,10 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
       if (!result) {
         throw ApiError.notFound('Task not found');
       }
+      emitTask(
+        request,
+        result.task,
+      );
       return result;
     },
   );
@@ -313,14 +382,16 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         row,
       } = await loadTask(request);
-      return {
-        ids: await moveTask(
+      return emitOrder(
+        request,
+        row.type,
+        await moveTask(
           ctx.db,
           user,
           row,
           request.params.position,
         ),
-      };
+      );
     },
   );
 
@@ -357,12 +428,15 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         row,
       } = await loadTask(request);
-      return addChecklistItem(
-        ctx.db,
-        user,
-        row,
-        request.body,
-        ctx.clock(),
+      return emitTask(
+        request,
+        await addChecklistItem(
+          ctx.db,
+          user,
+          row,
+          request.body,
+          ctx.clock(),
+        ),
       );
     },
   );
@@ -382,13 +456,16 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         row,
       } = await loadTask(request);
-      return updateChecklistItem(
-        ctx.db,
-        user,
-        row,
-        request.params.itemId,
-        request.body,
-        ctx.clock(),
+      return emitTask(
+        request,
+        await updateChecklistItem(
+          ctx.db,
+          user,
+          row,
+          request.params.itemId,
+          request.body,
+          ctx.clock(),
+        ),
       );
     },
   );
@@ -407,12 +484,15 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         row,
       } = await loadTask(request);
-      return toggleChecklistItem(
-        ctx.db,
-        user,
-        row,
-        request.params.itemId,
-        ctx.clock(),
+      return emitTask(
+        request,
+        await toggleChecklistItem(
+          ctx.db,
+          user,
+          row,
+          request.params.itemId,
+          ctx.clock(),
+        ),
       );
     },
   );
@@ -431,12 +511,15 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         row,
       } = await loadTask(request);
-      return deleteChecklistItem(
-        ctx.db,
-        user,
-        row,
-        request.params.itemId,
-        ctx.clock(),
+      return emitTask(
+        request,
+        await deleteChecklistItem(
+          ctx.db,
+          user,
+          row,
+          request.params.itemId,
+          ctx.clock(),
+        ),
       );
     },
   );
@@ -455,12 +538,15 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         row,
       } = await loadTask(request);
-      return addTagToTask(
-        ctx.db,
-        user,
-        row,
-        request.params.tagId,
-        ctx.clock(),
+      return emitTask(
+        request,
+        await addTagToTask(
+          ctx.db,
+          user,
+          row,
+          request.params.tagId,
+          ctx.clock(),
+        ),
       );
     },
   );
@@ -479,12 +565,15 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         row,
       } = await loadTask(request);
-      return removeTagFromTask(
-        ctx.db,
-        user,
-        row,
-        request.params.tagId,
-        ctx.clock(),
+      return emitTask(
+        request,
+        await removeTagFromTask(
+          ctx.db,
+          user,
+          row,
+          request.params.tagId,
+          ctx.clock(),
+        ),
       );
     },
   );

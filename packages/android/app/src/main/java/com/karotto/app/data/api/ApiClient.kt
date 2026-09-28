@@ -23,6 +23,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+private const val CLIENT_ID_HEADER = "X-Client-Id"
+
 class ApiException(val status: Int, val code: String, message: String) : IOException(message)
 
 class NetworkException(cause: Throwable) : IOException(cause.message ?: "Network error", cause)
@@ -30,6 +32,7 @@ class NetworkException(cause: Throwable) : IOException(cause.message ?: "Network
 /** Thin OkHttp + kotlinx.serialization client for the karotto API. */
 class ApiClient(
     private val credentials: () -> Credentials?,
+    val clientId: String,
 ) {
     data class Credentials(val baseUrl: String, val token: String?)
 
@@ -43,6 +46,19 @@ class ApiClient(
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
+
+    /** No read timeout: the event stream stays open until the server sends something. */
+    val streamingHttp: OkHttpClient = http.newBuilder().readTimeout(0, TimeUnit.SECONDS).build()
+
+    fun eventsRequest(): Request {
+        val creds = requireCredentials()
+        return Request.Builder()
+            .url(url("/events", creds.baseUrl))
+            .header("Authorization", "Bearer ${creds.token}")
+            .header("Accept", "text/event-stream")
+            .header(CLIENT_ID_HEADER, clientId)
+            .build()
+    }
 
     private val jsonMedia = "application/json; charset=utf-8".toMediaType()
 
@@ -65,6 +81,7 @@ class ApiClient(
         val builder = Request.Builder().url(url(path, creds.baseUrl))
         creds.token?.let { builder.header("Authorization", "Bearer $it") }
         builder.header("Accept", "application/json")
+        builder.header(CLIENT_ID_HEADER, clientId)
         val requestBody = body?.let { json.encodeToString(JsonElement.serializer(), it).toRequestBody(jsonMedia) }
         builder.method(method, requestBody ?: if (method == "POST" || method == "PUT" || method == "PATCH") "".toRequestBody(null) else null)
         val response = try {

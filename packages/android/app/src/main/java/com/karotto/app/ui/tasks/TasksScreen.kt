@@ -32,6 +32,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -65,6 +67,7 @@ import com.karotto.app.ui.common.EmptyState
 import com.karotto.app.ui.common.icon
 import com.karotto.app.ui.common.label
 import com.karotto.app.ui.common.rememberHaptic
+import com.karotto.app.ui.theme.Brand
 import com.karotto.app.ui.theme.KarottoTheme
 import kotlinx.coroutines.launch
 
@@ -87,7 +90,12 @@ fun TasksScreen(
 
     LaunchedEffect(state.notice) {
         val notice = state.notice ?: return@LaunchedEffect
-        snackbar.showSnackbar(notice.text)
+        val result = snackbar.showSnackbar(
+            message = notice.text,
+            actionLabel = notice.action,
+            duration = SnackbarDuration.Short,
+        )
+        if (result == SnackbarResult.ActionPerformed) notice.onAction?.invoke()
         viewModel.dismissNotice()
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
@@ -141,6 +149,7 @@ fun TasksScreen(
                 shape = RoundedCornerShape(100.dp),
                 containerColor = if (state.notice?.error == true) colors.textRed else colors.textPrimary,
                 contentColor = if (colors.isDark) colors.contentBackground else Color.White,
+                actionColor = if (colors.isDark) Brand.b300 else Brand.b500,
             )
         }
     }

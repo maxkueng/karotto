@@ -19,6 +19,7 @@ import {
   listApiTokens,
   revokeApiToken,
 } from '@/services/apiTokens';
+import { originOf } from '@/services/events';
 import {
   serializeUser,
   setPassword,
@@ -65,10 +66,19 @@ export const userRoutes: FastifyPluginAsyncZod<AppContext> = async (
         request.body,
         now,
       );
-      return serializeUser(
+      const user = serializeUser(
         updated,
         now,
       );
+      ctx.events.publish(
+        updated.id,
+        {
+          type: 'user.updated',
+          user,
+        },
+        originOf(request),
+      );
+      return user;
     },
   );
 

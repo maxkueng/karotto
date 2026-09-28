@@ -212,7 +212,6 @@ data class Preferences(
     val dayStart: Int = 0,
     val timezone: String = "UTC",
     val dateFormat: String = "MM/dd/yyyy",
-    val activeFilter: ActiveFilter = ActiveFilter(),
     val completedTodoRetentionDays: Int? = 30,
 )
 
