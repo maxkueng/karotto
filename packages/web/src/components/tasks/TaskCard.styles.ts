@@ -246,6 +246,14 @@ export const ChecklistPillSlot = twc(
   ['mb-2'],
 );
 
+export const ChecklistItems = twc(
+  'div',
+  [
+    'flex',
+    'flex-col',
+  ],
+);
+
 export const ChecklistText = twc(
   'span',
   [

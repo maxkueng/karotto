@@ -25,6 +25,7 @@ import {
   CheckControlStrip,
   CheckGlyph,
   ChecklistArea,
+  ChecklistItems,
   ChecklistPillSlot,
   ChecklistText,
   ClickableArea,
@@ -309,26 +310,28 @@ export function TaskCard(props: TaskCardProps) {
                   </Button>
                 </ChecklistPillSlot>
                 <Show when={expanded()}>
-                  <For each={checklist()}>
-                    {(item) => (
-                      <Checkbox
-                        checked={item.completed}
-                        onChange={() => props.onToggleChecklistItem?.(item.id)}
-                        label={(
-                          <Markdown
-                            source={item.text}
-                            inline
-                            as={(textProps) => (
-                              <ChecklistText
-                                {...textProps}
-                                completed={item.completed}
-                              />
-                            )}
-                          />
-                        )}
-                      />
-                    )}
-                  </For>
+                  <ChecklistItems>
+                    <For each={checklist()}>
+                      {(item) => (
+                        <Checkbox
+                          checked={item.completed}
+                          onChange={() => props.onToggleChecklistItem?.(item.id)}
+                          label={(
+                            <Markdown
+                              source={item.text}
+                              inline
+                              as={(textProps) => (
+                                <ChecklistText
+                                  {...textProps}
+                                  completed={item.completed}
+                                />
+                              )}
+                            />
+                          )}
+                        />
+                      )}
+                    </For>
+                  </ChecklistItems>
                 </Show>
               </ChecklistArea>
             </Show>
