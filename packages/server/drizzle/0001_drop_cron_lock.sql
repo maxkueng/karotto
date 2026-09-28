@@ -1,0 +1,1 @@
+ALTER TABLE "users" DROP COLUMN "cron_lock_at";

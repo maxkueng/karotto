@@ -1,0 +1,21 @@
+{
+  "name": "@karotto/core",
+  "version": "0.1.0",
+  "description": "Shared schemas and domain logic for karotto",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "luxon": "^3.7.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.5"
+  }
+}

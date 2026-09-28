@@ -1,0 +1,235 @@
+@import "tailwindcss";
+@import "@fontsource/roboto/400.css";
+@import "@fontsource/roboto/400-italic.css";
+@import "@fontsource/roboto/700.css";
+@import "@fontsource/roboto-condensed/400.css";
+@import "@fontsource/roboto-condensed/700.css";
+
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #1a181d;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-gray-10: #34313a;
+  --color-gray-50: #4e4a57;
+  --color-gray-100: #686274;
+  --color-gray-200: #878190;
+  --color-gray-300: #a5a1ac;
+  --color-gray-400: #c3c0c7;
+  --color-gray-500: #e1e0e3;
+  --color-gray-600: #edecee;
+  --color-gray-700: #f9f9f9;
+
+  --color-red-1: #6c0406;
+  --color-red-10: #f23035;
+  --color-red-50: #f74e52;
+  --color-red-100: #ff6165;
+  --color-red-500: #ffb6b8;
+
+  --color-maroon-10: #b01515;
+  --color-maroon-50: #c92b2b;
+  --color-maroon-100: #de3f3f;
+  --color-maroon-500: #f19595;
+
+  --color-orange-1: #7f3300;
+  --color-orange-10: #f47825;
+  --color-orange-50: #fa8537;
+  --color-orange-100: #ff944c;
+  --color-orange-500: #ffc8a7;
+
+  --color-yellow-1: #794b00;
+  --color-yellow-5: #ee9109;
+  --color-yellow-10: #ffa624;
+  --color-yellow-50: #ffb445;
+  --color-yellow-100: #ffbe5d;
+  --color-yellow-500: #fedead;
+
+  --color-green-1: #005737;
+  --color-green-10: #1ca372;
+  --color-green-50: #20b780;
+  --color-green-100: #24cc8f;
+  --color-green-500: #77f4c7;
+
+  --color-teal-1: #005158;
+  --color-teal-10: #26a0ab;
+  --color-teal-50: #34b5c1;
+  --color-teal-100: #3bcad7;
+  --color-teal-500: #8eedf6;
+
+  --color-blue-1: #033f5e;
+  --color-blue-10: #2995cd;
+  --color-blue-50: #46a7d9;
+  --color-blue-100: #50b5e9;
+  --color-blue-500: #a9dcf6;
+
+  --color-purple-50: #36205d;
+  --color-purple-100: #432874;
+  --color-purple-200: #4f2a93;
+  --color-purple-300: #6133b4;
+  --color-purple-400: #925cf3;
+  --color-purple-500: #bda8ff;
+  --color-purple-600: #d5c8ff;
+
+  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --font-condensed: "Roboto Condensed", "Roboto", ui-sans-serif, sans-serif;
+
+  --shadow-card: 0 2px 2px 0 rgba(26, 24, 29, 0.16), 0 1px 4px 0 rgba(26, 24, 29, 0.12);
+  --shadow-card-hover: 0 1px 8px 0 rgba(26, 24, 29, 0.12), 0 4px 4px 0 rgba(26, 24, 29, 0.16);
+  --shadow-btn: 0 1px 3px 0 rgba(26, 24, 29, 0.12), 0 1px 2px 0 rgba(26, 24, 29, 0.24);
+  --shadow-btn-hover: 0 3px 6px 0 rgba(26, 24, 29, 0.16), 0 3px 6px 0 rgba(26, 24, 29, 0.24);
+  --shadow-modal: 0 14px 28px 0 rgba(26, 24, 29, 0.24), 0 10px 10px 0 rgba(26, 24, 29, 0.28);
+  --shadow-nav: 0 1px 2px 0 rgba(26, 24, 29, 0.24);
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-gray-700);
+    color: var(--color-gray-50);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.43;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  a {
+    color: var(--color-purple-300);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  .small-text {
+    font-size: 12px;
+    line-height: 1.33;
+  }
+
+  .markdown p {
+    margin: 0 0 8px;
+  }
+
+  .markdown p:last-child {
+    margin-bottom: 0;
+  }
+
+  .markdown a {
+    color: var(--color-purple-300);
+  }
+
+  .markdown img {
+    max-width: 100%;
+  }
+
+  .markdown code {
+    font-family: ui-monospace, monospace;
+    font-size: 0.9em;
+    background: rgba(26, 24, 29, 0.06);
+    padding: 0 3px;
+    border-radius: 2px;
+  }
+
+  .markdown blockquote {
+    margin: 0 0 8px;
+    padding: 0 16px;
+    border-left: 4px solid var(--color-gray-500);
+  }
+
+  .markdown ul,
+  .markdown ol {
+    margin: 0 0 8px;
+    padding-left: 20px;
+  }
+
+  .markdown h1,
+  .markdown h2,
+  .markdown h3,
+  .markdown h4 {
+    font-family: var(--font-condensed);
+    font-weight: 400;
+    color: var(--color-gray-10);
+    margin: 0 0 4px;
+  }
+
+  .markdown .emoji {
+    font-size: 0.95em;
+    vertical-align: middle;
+  }
+}
+
+@layer components {
+  .task-drag-ghost {
+    opacity: 0.4;
+  }
+
+  .drag-preview {
+    opacity: 0.95;
+    cursor: grabbing;
+  }
+
+  .drag-preview [role="tooltip"] {
+    display: none;
+  }
+
+  .sortable-chosen .task-card {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  @keyframes quick-add-tip {
+    from {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      opacity: 0;
+    }
+    to {
+      max-height: 80px;
+      opacity: 1;
+    }
+  }
+
+  .quick-add-tip {
+    animation: quick-add-tip 0.4s cubic-bezier(0, 1, 0.5, 1);
+    overflow: hidden;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .fade-in {
+    animation: fade-in 0.15s ease-in;
+  }
+}
