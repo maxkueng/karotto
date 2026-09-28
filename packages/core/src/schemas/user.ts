@@ -97,6 +97,14 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const tokenLoginSchema = z.object({
+  username: z.string().trim().min(1),
+  password: z.string().min(1),
+  name: z.string().trim().min(1).max(100),
+  timezone: timezoneSchema.optional(),
+});
+export type TokenLoginInput = z.infer<typeof tokenLoginSchema>;
+
 export const passwordChangeSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: passwordSchema,

@@ -15,6 +15,7 @@ analysis the implementation was derived from.
 | `packages/core` | Shared zod schemas and pure domain logic: scheduling, scoring, rollover, colours |
 | `packages/server` | Fastify API, Drizzle/Postgres, auth, CLI |
 | `packages/web` | Vite + SolidJS + Tailwind client |
+| `packages/android` | Native Kotlin + Jetpack Compose app, UI modelled on the Habitica Android client |
 
 ## Development
 
@@ -36,6 +37,30 @@ npm run typecheck
 npm run lint
 npm test
 ```
+
+## Android app
+
+`packages/android` is a standalone Gradle project (not an npm workspace). It
+talks to the same API with a long-lived token created through
+`POST /api/v1/auth/token` from the login screen, caches tasks in Room, scores
+optimistically with an offline queue, computes daily due-ness locally and
+delivers reminders as exact alarms.
+
+Requirements: JDK 21, Android SDK with platform 37. The Gradle wrapper fetches
+everything else.
+
+```sh
+cd packages/android
+./gradlew installDebug          # build and install on the connected device/emulator
+./gradlew testDebugUnitTest     # scheduling/scoring/day-context tests
+```
+
+Server URL on the login screen:
+
+- Emulator: `http://10.0.2.2:3210` (the host's loopback).
+- Phone on the same LAN or Tailscale: start the API with `HOST=0.0.0.0` in
+  `.env` and use `http://<machine-ip>:3210`. Cleartext HTTP is allowed by the
+  app for that purpose; put the deployed server behind HTTPS.
 
 ## API
 

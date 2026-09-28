@@ -1,12 +1,15 @@
 import {
+  apiTokenCreatedSchema,
   loginSchema,
   okSchema,
+  tokenLoginSchema,
   userSchema,
 } from '@karotto/core';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { SESSION_COOKIE } from '@/auth/plugin';
 import type { AppContext } from '@/context';
 import { ApiError } from '@/lib/errors';
+import { createApiToken } from '@/services/apiTokens';
 import {
   createSession,
   deleteSession,
@@ -81,6 +84,56 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
         user,
         now,
       );
+    },
+  );
+
+  app.post(
+    '/auth/token',
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '1 minute',
+        },
+      },
+      schema: {
+        tags: ['auth'],
+        body: tokenLoginSchema,
+        response: { 201: apiTokenCreatedSchema },
+      },
+    },
+    async (
+      request,
+      reply,
+    ) => {
+      const now = ctx.clock();
+      let user = await authenticate(
+        ctx.db,
+        request.body.username,
+        request.body.password,
+      );
+      if (!user) {
+        throw ApiError.invalidCredentials('Invalid username or password');
+      }
+      if (request.body.timezone && request.body.timezone !== user.timezone) {
+        user = await updatePreferences(
+          ctx.db,
+          user,
+          { timezone: request.body.timezone },
+          now,
+        );
+      }
+      const created = await createApiToken(
+        ctx.db,
+        {
+          userId: user.id,
+          name: request.body.name,
+          expiresAt: null,
+          now,
+        },
+      );
+      reply.status(201);
+      return created;
     },
   );
 

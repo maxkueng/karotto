@@ -701,6 +701,51 @@ describe(
 );
 
 describe(
+  'token login',
+  () => {
+    it(
+      'issues a named token for valid credentials',
+      async () => {
+        const saved = cookie;
+        cookie = '';
+        const {
+          status,
+          body,
+        } = await call(
+          'POST',
+          '/auth/token',
+          {
+            username: 'max',
+            password: 'correct horse battery',
+            name: 'phone',
+          },
+        );
+        expect(status).toBe(201);
+        expect((body?.token as string).startsWith('krt_')).toBe(true);
+        const viaToken = await call(
+          'GET',
+          '/user',
+          undefined,
+          { authorization: `Bearer ${body?.token as string}` },
+        );
+        expect(viaToken.status).toBe(200);
+        const bad = await call(
+          'POST',
+          '/auth/token',
+          {
+            username: 'max',
+            password: 'wrong',
+            name: 'phone',
+          },
+        );
+        expect(bad.status).toBe(401);
+        cookie = saved;
+      },
+    );
+  },
+);
+
+describe(
   'api tokens',
   () => {
     it(
@@ -738,8 +783,9 @@ describe(
           'GET',
           '/user/tokens',
         );
-        expect((list.body as unknown as Json[]).length).toBe(1);
-        expect((list.body as unknown as Json[])[0]?.token).toBeUndefined();
+        const tokens = list.body as unknown as Json[];
+        expect(tokens.some((token) => token.id === created.body?.id)).toBe(true);
+        expect(tokens.every((token) => token.token === undefined)).toBe(true);
         const revoked = await call(
           'DELETE',
           `/user/tokens/${created.body?.id as string}`,
