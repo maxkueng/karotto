@@ -32,7 +32,7 @@ install_packages() {
     curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - >/dev/null
     apt-get install -y -qq nodejs >/dev/null
   fi
-  log "node $(node --version), npm $(npm --version)"
+  log "node $(node --version), npm $(HOME=/root npm --version)"
 }
 
 ensure_swap() {
