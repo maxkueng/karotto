@@ -112,9 +112,9 @@ One Debian/Ubuntu box, Postgres alongside, the app as a systemd service and
 Tailscale (or any TLS-terminating proxy) in front:
 
 ```sh
-git clone <this repo> /opt/karotto/src
-/opt/karotto/src/deploy/install.sh
-karotto user create max --timezone Europe/Zurich
+git clone <this repo> ~/karotto
+sudo ~/karotto/deploy/install.sh
+sudo karotto user create max --timezone Europe/Zurich
 ```
 
 Re-run the installer after `git pull` to update. Full walkthrough, including

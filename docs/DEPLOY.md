@@ -13,10 +13,12 @@ key authentication, and enable the weekly droplet backups if you like belt
 and braces. Note the IP; you only ever need it for SSH.
 
 ```sh
-ssh root@<droplet-ip>
-git clone https://github.com/<you>/karotto.git /opt/karotto/src
-/opt/karotto/src/deploy/install.sh
+git clone https://github.com/<you>/karotto.git ~/karotto
+sudo ~/karotto/deploy/install.sh
 ```
+
+Clone as your normal user; only the installer needs root. It copies the
+checkout to `/opt/karotto/src` and hands it to the service user.
 
 The installer is idempotent. It:
 
@@ -36,8 +38,8 @@ The installer is idempotent. It:
 Then create your account:
 
 ```sh
-karotto user create max --timezone Europe/Zurich
-journalctl -u karotto -f
+sudo karotto user create max --timezone Europe/Zurich
+sudo journalctl -u karotto -f
 ```
 
 ## 2. Tailscale
@@ -85,7 +87,7 @@ browser will drop the session cookie.
 
 | Task | Command |
 |---|---|
-| Update to the latest version | `cd /opt/karotto/src && git pull && ./deploy/install.sh` |
+| Update to the latest version | `cd ~/karotto && git pull && sudo deploy/install.sh` |
 | Logs | `journalctl -u karotto -f` |
 | Restart | `systemctl restart karotto` |
 | Create a user / API token | `karotto user create <name>`, `karotto token create <name> --name scripts` |
