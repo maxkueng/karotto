@@ -45,27 +45,48 @@ sudo journalctl -u karotto -f
 ## 2. Tailscale
 
 The app listens on `127.0.0.1:3210` only. Tailscale puts it on your tailnet
-with a real HTTPS certificate, no open ports and nothing to configure in a
-web dashboard:
+with a real HTTPS certificate and no open ports. Two ways, pick one.
+
+### As a Tailscale Service (own name, own port 443)
+
+A Service gets its own tailnet address, so the app lives at
+`https://karotto.<tailnet>.ts.net` and other services on the same machine
+can also use port 443. One-time setup in the Tailscale admin console:
+
+1. Define a tag for the host (for example `tag:server`) in the tailnet policy
+   and assign it to the machine: `sudo tailscale up --advertise-tags=tag:server`.
+   Services can only be hosted by tagged devices.
+2. Create the service `svc:karotto` under Services.
+3. On the machine:
+
+   ```sh
+   sudo tailscale serve --service=svc:karotto --https=443 127.0.0.1:3210
+   ```
+
+4. Approve the machine as a host of the service in the console, or add an
+   auto-approver rule for the tag so you never have to.
+
+`tailscale serve status` confirms the mapping; it survives reboots.
+
+### With plain `tailscale serve` (no admin work)
 
 ```sh
 curl -fsSL https://tailscale.com/install.sh | sh
-tailscale up                         # prints a login URL, approve it once
-tailscale serve --bg https:443 http://127.0.0.1:3210
+sudo tailscale up                    # prints a login URL, approve it once
+sudo tailscale serve --bg https:443 http://127.0.0.1:3210
 ```
 
-`tailscale serve` terminates TLS with a certificate for the machine's
-MagicDNS name and forwards to the app. The URL is
-`https://<droplet-name>.<tailnet>.ts.net`; `tailscale status` shows the
-name. Certificates need MagicDNS and HTTPS enabled once for the tailnet,
-which the command tells you about if they are not.
+This uses the machine's own name, `https://<machine>.<tailnet>.ts.net`, and
+claims the machine's tailnet port 443; a second app needs another port
+(`https:8443`). Certificates need MagicDNS and HTTPS enabled once for the
+tailnet, which the command tells you about if they are not.
 
-That URL works from every device on the tailnet, phone included. Use it on
-the Android login screen and in the browser. `TRUST_PROXY=true` in
+Either way the URL works from every device on the tailnet, phone included.
+Use it on the Android login screen and in the browser. `TRUST_PROXY=true` in
 `/etc/karotto/env` makes the app read the client address from the
-`X-Forwarded-For` header that `tailscale serve` sets, and `NODE_ENV=production`
-keeps the session cookie HTTPS-only, which is right because the browser talks
-HTTPS to Tailscale.
+`X-Forwarded-For` header Tailscale sets, and `NODE_ENV=production` keeps the
+session cookie HTTPS-only, which is right because the browser talks HTTPS to
+Tailscale.
 
 If you ever want the app reachable without Tailscale, put Caddy in front
 instead and open ports 80 and 443; it fetches its own certificates:
@@ -119,7 +140,7 @@ Edit, then `systemctl restart karotto`.
 ## 5. Phone
 
 Install Tailscale on the phone, join the same tailnet, and point the Android
-app at `https://<droplet-name>.<tailnet>.ts.net`. It creates its own
+app at the same `https://….ts.net` URL. It creates its own
 long-lived token on login and never stores the password.
 
 ## Docker instead
