@@ -108,14 +108,27 @@ the container it is `node packages/server/dist/cli.js <args>`.
 
 ## Production
 
+One Debian/Ubuntu box, Postgres alongside, the app as a systemd service and
+Tailscale (or any TLS-terminating proxy) in front:
+
+```sh
+git clone <this repo> /opt/karotto/src
+/opt/karotto/src/deploy/install.sh
+karotto user create max --timezone Europe/Zurich
+```
+
+Re-run the installer after `git pull` to update. Full walkthrough, including
+the DigitalOcean and Tailscale steps, backups and configuration:
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
+A `Dockerfile` (API plus static web app in one image) and a
+`docker-compose.yml` for Postgres are there for container setups:
+
 ```sh
 docker build -t karotto .
 docker run -e DATABASE_URL=postgres://... -p 3210:3000 karotto
 ```
 
-The image serves the API and the web app from one process. Migrations run on
-boot (`AUTO_MIGRATE=true`). Set `TRUST_PROXY=true` behind a reverse proxy and
-leave `SECURE_COOKIES` at its production default (on) so the session cookie is
-only sent over HTTPS.
-
-Environment variables: see `.env.example`.
+Migrations run on boot (`AUTO_MIGRATE=true`). Set `TRUST_PROXY=true` behind a
+reverse proxy and leave `SECURE_COOKIES` at its production default (on) so the
+session cookie is only sent over HTTPS.
