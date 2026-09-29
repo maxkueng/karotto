@@ -53,20 +53,37 @@ A Service gets its own tailnet address, so the app lives at
 `https://karotto.<tailnet>.ts.net` and other services on the same machine
 can also use port 443. One-time setup in the Tailscale admin console:
 
-1. Define a tag for the host (for example `tag:server`) in the tailnet policy
-   and assign it to the machine: `sudo tailscale up --advertise-tags=tag:server`.
-   Services can only be hosted by tagged devices.
-2. Create the service `svc:karotto` under Services.
-3. On the machine:
+1. Define a tag for the host (for example `tag:server`) under Access
+   Controls, `"tagOwners": { "tag:server": ["autogroup:admin"] }`, and add an
+   auto-approver so hosts of the service are accepted without a click:
+
+   ```json
+   "autoApprovers": {
+     "services": { "svc:karotto": ["tag:server"] }
+   }
+   ```
+
+2. Tag the machine from the console: Machines → the host → Edit ACL tags →
+   `tag:server`. Services can only be hosted by tagged devices. Do not run
+   `tailscale up` or `tailscale login` afterwards; that re-authenticates the
+   node as your user and drops the tag.
+3. Services → Define a Service: name `karotto`, port `tcp:443`.
+4. On the machine, only after the tag and the service exist:
 
    ```sh
    sudo tailscale serve --service=svc:karotto --https=443 127.0.0.1:3210
    ```
 
-4. Approve the machine as a host of the service in the console, or add an
-   auto-approver rule for the tag so you never have to.
+   If the host does not appear under the service within a minute, the
+   advertisement was sent before the tag applied and got dropped; re-send it:
 
-`tailscale serve status` confirms the mapping; it survives reboots.
+   ```sh
+   sudo tailscale serve --service=svc:karotto reset
+   sudo tailscale serve --service=svc:karotto --https=443 127.0.0.1:3210
+   ```
+
+`tailscale serve status` confirms the mapping; it survives reboots. Requires
+Tailscale 1.86 or newer on the host.
 
 ### With plain `tailscale serve` (no admin work)
 
