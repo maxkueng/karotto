@@ -29,10 +29,6 @@ import {
 } from '@/services/users';
 
 async function readPassword(prompt: string): Promise<string> {
-  const rl = createInterface({
-    input: stdin,
-    output: process.stdout,
-  });
   const muted = stdin.isTTY;
   if (muted) {
     process.stdout.write(prompt);
@@ -74,9 +70,13 @@ async function readPassword(prompt: string): Promise<string> {
       );
     });
   } else {
+    const rl = createInterface({
+      input: stdin,
+      output: process.stdout,
+    });
     value = (await rl.question(prompt)).trim();
+    rl.close();
   }
-  rl.close();
   return value;
 }
 

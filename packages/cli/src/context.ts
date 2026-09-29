@@ -1,5 +1,4 @@
 import { stdin } from 'node:process';
-import { createInterface } from 'node:readline/promises';
 import type {
   ScoreResult,
   Tag,
@@ -49,43 +48,40 @@ export async function readSecret(prompt: string): Promise<string> {
       '',
     );
   }
-  const rl = createInterface({
-    input: stdin,
-    output: process.stderr,
-  });
   process.stderr.write(prompt);
   stdin.setRawMode(true);
-  const value = await new Promise<string>((resolve) => {
+  stdin.resume();
+  return new Promise<string>((resolve) => {
     let buffer = '';
     const onData = (chunk: Buffer) => {
-      const char = chunk.toString('utf8');
-      if (char === '\n' || char === '\r' || char === '\u0004') {
-        stdin.setRawMode(false);
-        stdin.off(
-          'data',
-          onData,
-        );
-        process.stderr.write('\n');
-        resolve(buffer);
-        return;
+      for (const char of chunk.toString('utf8')) {
+        if (char === '\n' || char === '\r' || char === '\u0004') {
+          stdin.setRawMode(false);
+          stdin.pause();
+          stdin.off(
+            'data',
+            onData,
+          );
+          process.stderr.write('\n');
+          resolve(buffer);
+          return;
+        }
+        if (char === '\u0003') {
+          process.exit(130);
+        }
+        buffer = char === '\u007f' || char === '\b'
+          ? buffer.slice(
+              0,
+              -1,
+            )
+          : buffer + char;
       }
-      if (char === '\u0003') {
-        process.exit(130);
-      }
-      buffer = char === '\u007f' || char === '\b'
-        ? buffer.slice(
-            0,
-            -1,
-          )
-        : buffer + char;
     };
     stdin.on(
       'data',
       onData,
     );
   });
-  rl.close();
-  return value;
 }
 
 export async function tagMap(api: ApiClient): Promise<Map<string, Tag>> {
