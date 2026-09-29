@@ -48,12 +48,12 @@ import com.karotto.app.ui.common.MarkdownText
 import com.karotto.app.ui.common.TaskCheckbox
 import com.karotto.app.ui.theme.KarottoTheme
 import com.karotto.app.ui.theme.ValueRamp
-import com.karotto.app.ui.theme.ramps
 import java.time.Instant
 
 private val cardShape = RoundedCornerShape(8.dp)
 
-val Task.ramp: ValueRamp get() = ramps.getValue(Scoring.color(value))
+@Composable
+fun rampFor(task: Task): ValueRamp = KarottoTheme.palette.ramps.getValue(Scoring.color(task.value))
 
 data class CardCallbacks(
     val onOpen: (Task) -> Unit,
@@ -109,7 +109,7 @@ fun TaskCard(
 private fun HabitStrip(task: Habit, direction: Direction, onClick: () -> Unit) {
     val colors = KarottoTheme.colors
     val enabled = if (direction == Direction.UP) task.up else task.down
-    val ramp = task.ramp
+    val ramp = rampFor(task)
     Box(
         modifier = Modifier
             .width(40.dp)
@@ -147,7 +147,7 @@ private fun DailyStrip(task: Daily, onClick: () -> Unit) {
     val colors = KarottoTheme.colors
     val (background, fill) = when {
         task.completed -> colors.windowBackground to colors.checkboxFillSelected
-        task.isDue -> task.ramp.light to colors.checkboxFill
+        task.isDue -> rampFor(task).light to colors.checkboxFill
         else -> colors.offsetBackground to colors.checkboxFillInactive
     }
     CheckStrip(background, fill, round = false, checked = task.completed, onClick = onClick)
@@ -159,7 +159,7 @@ private fun TodoStrip(task: Todo, onClick: () -> Unit) {
     val (background, fill) = if (task.completed) {
         colors.windowBackground to colors.checkboxFillSelected
     } else {
-        task.ramp.light to colors.checkboxFill
+        rampFor(task).light to colors.checkboxFill
     }
     CheckStrip(background, fill, round = true, checked = task.completed, onClick = onClick)
 }
@@ -221,9 +221,9 @@ private fun IconRow(task: Task, ctx: DayContext, dateFormat: String) {
     val due: Pair<String, Color>? = (task as? Todo)?.dueDate?.let { date ->
         val today = ctx.cdsDay(Instant.now())
         when {
-            date == today -> "Today" to colors.textQuad
+            date == today -> "Today" to colors.textTernary
             date.isBefore(today) -> Dates.formatDate(date, dateFormat) to colors.overdue
-            else -> Dates.formatDate(date, dateFormat) to colors.textQuad
+            else -> Dates.formatDate(date, dateFormat) to colors.textTernary
         }
     }
     val reminder: String? = (task as? Daily)?.reminders?.takeIf { it.isNotEmpty() }?.let { reminders ->
@@ -242,11 +242,11 @@ private fun IconRow(task: Task, ctx: DayContext, dateFormat: String) {
         }
         if (streak != null) {
             SmallIcon(Icons.Rounded.LocalFireDepartment)
-            Caption(streak, colors.textQuad, Modifier.padding(start = 2.dp, end = 12.dp))
+            Caption(streak, colors.textTernary, Modifier.padding(start = 2.dp, end = 12.dp))
         }
         if (task.reminders.isNotEmpty()) {
             SmallIcon(Icons.Rounded.Alarm)
-            if (reminder != null) Caption(reminder, colors.textQuad, Modifier.padding(start = 2.dp))
+            if (reminder != null) Caption(reminder, colors.textTernary, Modifier.padding(start = 2.dp))
         }
     }
 }
@@ -257,7 +257,7 @@ private fun SmallIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
         icon,
         contentDescription = null,
         tint = KarottoTheme.colors.textTernary,
-        modifier = Modifier.size(18.dp).padding(2.dp).alpha(0.5f),
+        modifier = Modifier.size(18.dp).padding(2.dp).alpha(0.75f),
     )
 }
 
@@ -272,7 +272,11 @@ private fun ChecklistIndicator(task: Checklisted, onClick: () -> Unit) {
     val done = task.checklist.count { it.completed }
     val allDone = done == task.checklist.size
     val background = if (allDone) colors.offsetBackground else colors.textTernary
-    val foreground = if (allDone) colors.textQuad else if (colors.isDark) colors.offsetBackground else colors.contentBackgroundOffset
+    val foreground = when {
+        colors.isDark -> colors.contentBackground
+        allDone -> colors.textSecondary
+        else -> Color.White
+    }
     Box(
         modifier = Modifier
             .fillMaxHeight()
@@ -301,7 +305,7 @@ private fun ChecklistIndicator(task: Checklisted, onClick: () -> Unit) {
 private fun ChecklistRows(task: Checklisted, onToggle: (String) -> Unit) {
     val colors = KarottoTheme.colors
     val inactive = task.completed || (task is Daily && !task.isDue)
-    val ramp = task.ramp
+    val ramp = rampFor(task)
     val holder = if (inactive) colors.offsetBackground else ramp.extraLight
     val checkTint = if (inactive) colors.textDimmed else if (colors.isDark) ramp.extraDark else ramp.dark
     val boxFill = if (colors.isDark && !inactive) ramp.light else colors.checkboxFill

@@ -33,11 +33,13 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val session = container.settings.session.first()
             val themeMode = container.settings.themeMode.first()
+            val initialTheme = container.settings.themeId.first()
             setContent {
                 val mode by container.settings.themeMode.collectAsStateWithLifecycle(initialValue = themeMode)
+                val themeId by container.settings.themeId.collectAsStateWithLifecycle(initialValue = initialTheme)
                 val currentSession by container.session.collectAsStateWithLifecycle()
                 val navController = rememberNavController()
-                KarottoTheme(mode) {
+                KarottoTheme(themeId, mode) {
                     KarottoNavHost(container, navController, signedIn = session != null)
                 }
                 LaunchedEffect(currentSession == null) {

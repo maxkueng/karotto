@@ -156,7 +156,7 @@ fun FilterSheet(
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (colors.isDark) colors.offsetBackground else colors.windowBackground)
+                    .background(if (colors.isDark) colors.contentBackground else colors.offsetBackground)
                     .clickable {
                         if (!editing) editing = true
                         if (newTag == null) newTag = "" else finishEditing()

@@ -4,10 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.karotto.app.domain.Scoring
 import com.karotto.app.domain.TaskColor
-import com.karotto.app.ui.theme.Brand
-import com.karotto.app.ui.theme.KarottoColors
-import com.karotto.app.ui.theme.purpleRamp
-import com.karotto.app.ui.theme.ramps
+import com.karotto.app.ui.theme.BrandRamp
+import com.karotto.app.ui.theme.Palette
 
 /** Tinted form colours: purple when creating, the task's value colour when editing. */
 @Immutable
@@ -24,30 +22,32 @@ data class FormPalette(
     val uiDetails: Color,
 ) {
     companion object {
-        fun of(colors: KarottoColors, isEdit: Boolean, value: Double): FormPalette {
+        fun of(palette: Palette, isEdit: Boolean, value: Double): FormPalette {
+            val colors = palette.colors
+            val brand: BrandRamp = palette.brand
             if (!isEdit) {
                 return FormPalette(
-                    tint = Brand.b300,
+                    tint = brand.b300,
                     onTint = Color.White,
-                    fieldBox = Brand.b50,
-                    page = if (colors.isDark) colors.contentBackground else Brand.b800,
-                    offset = if (colors.isDark) purpleRamp.darkBackground else Brand.b500.copy(alpha = 0.12f),
-                    textPrimary = if (colors.isDark) Brand.b800 else Brand.b100,
-                    textSecondary = if (colors.isDark) Brand.b500 else Brand.b300,
-                    uiMain = Brand.b500,
-                    uiSub = Brand.b400,
-                    uiDetails = Brand.b100,
+                    fieldBox = brand.b50,
+                    page = brand.tint,
+                    offset = if (colors.isDark) brand.tintOffset else brand.b500.copy(alpha = 0.12f),
+                    textPrimary = if (colors.isDark) brand.b800 else brand.b100,
+                    textSecondary = if (colors.isDark) brand.b500 else brand.b300,
+                    uiMain = brand.b500,
+                    uiSub = brand.b400,
+                    uiDetails = brand.b100,
                 )
             }
             val color = Scoring.color(value)
-            val ramp = ramps.getValue(color)
+            val ramp = palette.ramps.getValue(color)
             val darkOnTint = color == TaskColor.WORST || color == TaskColor.WORSE
             return FormPalette(
                 tint = ramp.light,
                 onTint = if (darkOnTint) Color.White else ramp.extraDark,
                 fieldBox = ramp.extraDark,
-                page = if (colors.isDark) ramp.darkestBackground else ramp.lightest,
-                offset = if (colors.isDark) ramp.darkBackground else ramp.extraLight.copy(alpha = 0.12f),
+                page = ramp.tint,
+                offset = if (colors.isDark) ramp.tintOffset else ramp.extraLight.copy(alpha = 0.12f),
                 textPrimary = if (colors.isDark) ramp.extraLight else ramp.extraDark,
                 textSecondary = ramp.subText,
                 uiMain = ramp.extraLight,

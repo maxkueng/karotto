@@ -95,7 +95,7 @@ fun WelcomeBackDialog(
 @Composable
 private fun YesterdailyRow(daily: Daily, checked: Boolean, onToggle: () -> Unit, onToggleItem: (String) -> Unit) {
     val colors = KarottoTheme.colors
-    val ramp = daily.ramp
+    val ramp = rampFor(daily)
     Column(
         modifier = Modifier
             .fillMaxWidth()

@@ -63,7 +63,15 @@ describe(
               'nav-hover',
             ].forEach((key) => expect(tokens[key]).toMatch(hex));
             neutralSteps.forEach((step) => expect(tokens[`neutral-${step}`]).toMatch(hex));
-            hueNames.forEach((name) => hueSteps.forEach((step) => expect(tokens[`${name}-${step}`]).toMatch(hex)));
+            hueNames.forEach((name) => {
+              hueSteps.forEach((step) => expect(tokens[`${name}-${step}`]).toMatch(hex));
+              [
+                'sub',
+                'tint',
+                'tint-offset',
+              ].forEach((suffix) => expect(tokens[`${name}-${suffix}`]).toMatch(hex));
+            });
+            expect(tokens['brand-tint']).toMatch(hex);
             expect(tokens['brand-300']).toMatch(hex);
           });
         });
@@ -80,6 +88,9 @@ describe(
         );
         expect(tokens['brand-300']).toBe('#6133b4');
         expect(tokens['brand-600']).toBe('#d5c8ff');
+        expect(tokens['brand-800']).toBe('#f6f4fc');
+        expect(tokens['yellow-700']).toBe('#fffcf7');
+        expect(tokens['teal-sub']).toBe('#65a7ab');
         expect(tokens['yellow-5']).toBe('#ee9109');
         expect(tokens['maroon-500']).toBe('#f19595');
         expect(tokens['neutral-10']).toBe('#34313a');

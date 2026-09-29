@@ -53,13 +53,14 @@ import com.karotto.app.AppContainer
 import com.karotto.app.R
 import com.karotto.app.data.api.ApiException
 import com.karotto.app.data.api.NetworkException
-import com.karotto.app.ui.theme.Brand
-import com.karotto.app.ui.theme.Gray
+import com.karotto.app.ui.theme.BrandRamp
+import com.karotto.app.ui.theme.KarottoTheme
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 
 @Composable
 fun LoginScreen(container: AppContainer, onSignedIn: () -> Unit) {
+    val brand = KarottoTheme.palette.brand
     val remembered by container.settings.lastLogin.collectAsStateWithLifecycle(initialValue = null)
     var serverUrl by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
@@ -100,7 +101,7 @@ fun LoginScreen(container: AppContainer, onSignedIn: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brand.b300),
+            .background(brand.nav),
     ) {
         Column(
             modifier = Modifier
@@ -124,9 +125,9 @@ fun LoginScreen(container: AppContainer, onSignedIn: () -> Unit) {
                 modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                LoginField(serverUrl, { serverUrl = it }, "Server URL", KeyboardType.Uri)
-                LoginField(username, { username = it }, "Username", KeyboardType.Text)
-                LoginField(password, { password = it }, "Password", KeyboardType.Password, password = true, onDone = ::submit)
+                LoginField(brand, serverUrl, { serverUrl = it }, "Server URL", KeyboardType.Uri)
+                LoginField(brand, username, { username = it }, "Username", KeyboardType.Text)
+                LoginField(brand, password, { password = it }, "Password", KeyboardType.Password, password = true, onDone = ::submit)
             }
             error?.let {
                 Text(it, color = Color(0xFFFFB6B8), fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp))
@@ -141,9 +142,9 @@ fun LoginScreen(container: AppContainer, onSignedIn: () -> Unit) {
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
-                        contentColor = Gray.g50,
+                        contentColor = brand.b50,
                         disabledContainerColor = Color.White.copy(alpha = 0.5f),
-                        disabledContentColor = Gray.g50.copy(alpha = 0.6f),
+                        disabledContentColor = brand.b50.copy(alpha = 0.6f),
                     ),
                     modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth().height(54.dp),
                 ) {
@@ -157,6 +158,7 @@ fun LoginScreen(container: AppContainer, onSignedIn: () -> Unit) {
 
 @Composable
 private fun LoginField(
+    brand: BrandRamp,
     value: String,
     onChange: (String) -> Unit,
     placeholder: String,
@@ -168,7 +170,7 @@ private fun LoginField(
     TextField(
         value = value,
         onValueChange = onChange,
-        placeholder = { Text(placeholder, color = Brand.b600, fontSize = 18.sp) },
+        placeholder = { Text(placeholder, color = brand.b600, fontSize = 18.sp) },
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
         visualTransformation = if (password && !revealed) PasswordVisualTransformation() else VisualTransformation.None,
@@ -178,7 +180,7 @@ private fun LoginField(
                     Icon(
                         imageVector = if (revealed) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                         contentDescription = if (revealed) "Hide password" else "Show password",
-                        tint = Brand.b600,
+                        tint = brand.b600,
                     )
                 }
             }
@@ -186,9 +188,9 @@ private fun LoginField(
         keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = if (onDone != null) ImeAction.Done else ImeAction.Next, autoCorrectEnabled = false),
         keyboardActions = KeyboardActions(onDone = { onDone?.invoke() }),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Brand.b100,
-            unfocusedContainerColor = Brand.b100,
-            disabledContainerColor = Brand.b100,
+            focusedContainerColor = brand.navHover,
+            unfocusedContainerColor = brand.navHover,
+            disabledContainerColor = brand.navHover,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.White,
             cursorColor = Color.White,

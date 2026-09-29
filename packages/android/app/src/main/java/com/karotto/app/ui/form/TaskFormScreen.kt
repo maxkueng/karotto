@@ -100,7 +100,8 @@ import java.util.Locale
 fun TaskFormScreen(viewModel: TaskFormViewModel, onClose: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = KarottoTheme.colors
-    val palette = remember(state.isEdit, state.value, colors) { FormPalette.of(colors, state.isEdit, state.value) }
+    val themePalette = KarottoTheme.palette
+    val palette = remember(state.isEdit, state.value, themePalette) { FormPalette.of(themePalette, state.isEdit, state.value) }
     var discardPrompt by remember { mutableStateOf(false) }
     var deletePrompt by remember { mutableStateOf(false) }
 

@@ -39,6 +39,7 @@ class Settings(private val context: Context, private val secure: SecureStore) {
         val filterDaily = stringPreferencesKey("filter_daily")
         val filterTodo = stringPreferencesKey("filter_todo")
         val sessionStamp = longPreferencesKey("session_stamp")
+        val themeId = stringPreferencesKey("theme_id")
     }
 
     /** The stamp changes on every sign-in and sign-out so the flow re-reads the keystore token. */
@@ -99,6 +100,12 @@ class Settings(private val context: Context, private val secure: SecureStore) {
         context.dataStore.edit { it[Keys.themeMode] = mode.name }
     }
 
+    val themeId: Flow<String> = context.dataStore.data.map { it[Keys.themeId] ?: DEFAULT_THEME }
+
+    suspend fun setThemeId(id: String) {
+        context.dataStore.edit { it[Keys.themeId] = id }
+    }
+
     /** Per-device list views, as in Habitica; deliberately not synced through the server. */
     val activeFilter: Flow<ActiveFilter> = context.dataStore.data.map { prefs ->
         val defaults = ActiveFilter()
@@ -126,5 +133,6 @@ class Settings(private val context: Context, private val secure: SecureStore) {
 
     private companion object {
         const val TOKEN = "token"
+        const val DEFAULT_THEME = "carrot"
     }
 }

@@ -22,6 +22,8 @@ export const brandSteps = [
   400,
   500,
   600,
+  700,
+  800,
 ] as const;
 export const neutralSteps = [
   10,
@@ -41,6 +43,8 @@ export const hueSteps = [
   50,
   100,
   500,
+  600,
+  700,
 ] as const;
 
 export type ThemeMode = 'light' | 'dark';
@@ -60,6 +64,8 @@ export type ThemeVariant = {
   /** Each hue's representative colour (its 100 step). */
   hues: Record<HueName, string>;
   hueRamps?: Partial<Record<HueName, Partial<Record<(typeof hueSteps)[number], string>>>>;
+  /** Muted mid-tone per hue, used for secondary text on tinted forms. */
+  hueSubText?: Partial<Record<HueName, string>>;
 };
 
 export type ThemeSpec = {
@@ -132,6 +138,16 @@ function brandRamp(variant: ThemeVariant): Record<string, string> {
       0.34,
       0.4,
     ),
+    700: shift(
+      base,
+      0.4,
+      0.22,
+    ),
+    800: shift(
+      base,
+      0.44,
+      0.12,
+    ),
   };
   const tokens: Record<string, string> = {};
   brandSteps.forEach((step) => {
@@ -175,11 +191,30 @@ function hueRamp(
       0.08,
       0.93,
     ),
+    600: shift(
+      base,
+      0.24,
+      0.2,
+      0.08,
+      0.96,
+    ),
+    700: shift(
+      base,
+      0.27,
+      0.1,
+      0.08,
+      0.985,
+    ),
   };
   const tokens: Record<string, string> = {};
   hueSteps.forEach((step) => {
     tokens[`${name}-${step}`] = variant.hueRamps?.[name]?.[step] ?? generated[step];
   });
+  tokens[`${name}-sub`] = variant.hueSubText?.[name] ?? shift(
+    base,
+    -0.12,
+    0.35,
+  );
   return tokens;
 }
 
@@ -227,6 +262,41 @@ export function buildTokens(
         variant.page,
         variant.ink,
         0.015,
+      );
+  /* Tinted form backgrounds: pale hue tints on light themes, hue-washed page on dark ones. */
+  const washed = (
+    accent: string,
+    amount: number,
+  ) => mix(
+    variant.page,
+    accent,
+    amount,
+  );
+  hueNames.forEach((name) => {
+    tokens[`${name}-tint`] = mode === 'light'
+      ? tokens[`${name}-700`]!
+      : washed(
+          variant.hues[name],
+          0.08,
+        );
+    tokens[`${name}-tint-offset`] = mode === 'light'
+      ? tokens[`${name}-600`]!
+      : washed(
+          variant.hues[name],
+          0.18,
+        );
+  });
+  tokens['brand-tint'] = mode === 'light'
+    ? tokens['brand-800']!
+    : washed(
+        variant.brand,
+        0.08,
+      );
+  tokens['brand-tint-offset'] = mode === 'light'
+    ? tokens['brand-700']!
+    : washed(
+        variant.brand,
+        0.18,
       );
   tokens.nav = variant.nav ?? tokens['brand-100']!;
   tokens['nav-hover'] = variant.navHover ?? tokens['brand-200']!;
@@ -292,6 +362,17 @@ const classicLight: ThemeVariant = {
     400: '#925cf3',
     500: '#bda8ff',
     600: '#d5c8ff',
+    700: '#eeebf8',
+    800: '#f6f4fc',
+  },
+  hueSubText: {
+    maroon: '#ab6565',
+    red: '#ab6570',
+    orange: '#ab8165',
+    yellow: '#ab9065',
+    green: '#65ab94',
+    teal: '#65a7ab',
+    blue: '#6594ab',
   },
   hues: {
     maroon: '#de3f3f',
@@ -309,6 +390,8 @@ const classicLight: ThemeVariant = {
       10: '#b01515',
       50: '#c92b2b',
       500: '#f19595',
+      600: '#f7e9e9',
+      700: '#fff7f7',
     },
     red: {
       1: '#6c0406',
@@ -316,6 +399,8 @@ const classicLight: ThemeVariant = {
       10: '#f23035',
       50: '#f74e52',
       500: '#ffb6b8',
+      600: '#f7e9e9',
+      700: '#fff7f7',
     },
     orange: {
       1: '#7f3300',
@@ -323,6 +408,8 @@ const classicLight: ThemeVariant = {
       10: '#f47825',
       50: '#fa8537',
       500: '#ffc8a7',
+      600: '#f7eded',
+      700: '#fff9f5',
     },
     yellow: {
       1: '#794b00',
@@ -330,6 +417,8 @@ const classicLight: ThemeVariant = {
       10: '#ffa624',
       50: '#ffb445',
       500: '#fedead',
+      600: '#fcf3e5',
+      700: '#fffcf7',
     },
     green: {
       1: '#005737',
@@ -337,6 +426,8 @@ const classicLight: ThemeVariant = {
       10: '#1ca372',
       50: '#20b780',
       500: '#77f4c7',
+      600: '#ebf5f5',
+      700: '#f3fbf8',
     },
     teal: {
       1: '#005158',
@@ -344,6 +435,8 @@ const classicLight: ThemeVariant = {
       10: '#26a0ab',
       50: '#34b5c1',
       500: '#8eedf6',
+      600: '#e5f5f5',
+      700: '#f5fffe',
     },
     blue: {
       1: '#033f5e',
@@ -351,6 +444,8 @@ const classicLight: ThemeVariant = {
       10: '#2995cd',
       50: '#46a7d9',
       500: '#a9dcf6',
+      600: '#eef5f9',
+      700: '#fafdff',
     },
   },
 };
@@ -364,6 +459,8 @@ export const themes: ThemeSpec[] = [
       page: '#f7f4ef',
       surface: '#ffffff',
       brand: '#e0662a',
+      nav: '#2b2731',
+      navHover: '#3d3844',
       hues: {
         maroon: '#c6393a',
         red: '#ee5a5e',
@@ -378,6 +475,8 @@ export const themes: ThemeSpec[] = [
       ink: '#efe8df',
       page: '#1c1a1f',
       brand: '#f28444',
+      nav: '#26232a',
+      navHover: '#353139',
       hues: {
         maroon: '#d2494a',
         red: '#f2686b',

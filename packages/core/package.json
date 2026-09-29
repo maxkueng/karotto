@@ -9,7 +9,8 @@
     "./*": "./src/*.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "themes:android": "node scripts/android-themes.ts"
   },
   "dependencies": {
     "luxon": "^3.7.2",

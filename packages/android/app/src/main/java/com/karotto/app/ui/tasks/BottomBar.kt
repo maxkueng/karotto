@@ -55,7 +55,6 @@ import com.karotto.app.domain.TaskType
 import com.karotto.app.ui.common.icon
 import com.karotto.app.ui.common.label
 import com.karotto.app.ui.common.singular
-import com.karotto.app.ui.theme.Brand
 import com.karotto.app.ui.theme.KarottoTheme
 
 private const val FAB_SIZE = 80
@@ -172,6 +171,7 @@ private fun Fab(open: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
 @Composable
 private fun SpeedDial(open: Boolean, onCreateOfType: (TaskType) -> Unit) {
     val colors = KarottoTheme.colors
+    val brand = KarottoTheme.palette.brand
     Column(
         modifier = Modifier.padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -190,10 +190,10 @@ private fun SpeedDial(open: Boolean, onCreateOfType: (TaskType) -> Unit) {
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 1.5.sp,
-                        color = if (colors.isDark) Brand.b200 else Brand.b300,
+                        color = if (colors.isDark) brand.b200 else brand.b300,
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Brand.b600)
+                            .background(brand.b600)
                             .clickable { onCreateOfType(type) }
                             .padding(horizontal = 16.dp, vertical = 6.dp),
                     )
@@ -206,7 +206,7 @@ private fun SpeedDial(open: Boolean, onCreateOfType: (TaskType) -> Unit) {
                             .clickable { onCreateOfType(type) },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(type.icon, contentDescription = type.singular, tint = Brand.b300, modifier = Modifier.size(28.dp))
+                        Icon(type.icon, contentDescription = type.singular, tint = brand.b300, modifier = Modifier.size(28.dp))
                     }
                 }
             }

@@ -38,6 +38,14 @@ npm run lint
 npm test
 ```
 
+Themes live in `packages/core/src/theme/themes.ts`. After editing them,
+regenerate the outputs both clients ship:
+
+```sh
+npm run theme:css -w @karotto/web          # Tailwind variables for the default theme
+npm run themes:android -w @karotto/core    # Kotlin palettes for the Android app
+```
+
 ## Android app
 
 `packages/android` is a standalone Gradle project (not an npm workspace). It

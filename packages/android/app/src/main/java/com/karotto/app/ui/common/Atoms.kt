@@ -65,7 +65,7 @@ fun RowScope.FilterPill(text: String, selected: Boolean, onClick: () -> Unit) {
             .weight(1f)
             .height(40.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) colors.accent else colors.offsetBackground)
+            .background(if (selected) colors.accent else if (colors.isDark) colors.contentBackground else colors.offsetBackground)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -73,7 +73,7 @@ fun RowScope.FilterPill(text: String, selected: Boolean, onClick: () -> Unit) {
             text = text,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
-            color = if (selected) Color.White else colors.textTernary,
+            color = if (selected) Color.White else if (colors.isDark) colors.textSecondary else colors.textTernary,
             textAlign = TextAlign.Center,
         )
     }

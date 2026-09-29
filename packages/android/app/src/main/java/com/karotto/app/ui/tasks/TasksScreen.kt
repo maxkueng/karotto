@@ -67,7 +67,6 @@ import com.karotto.app.ui.common.EmptyState
 import com.karotto.app.ui.common.icon
 import com.karotto.app.ui.common.label
 import com.karotto.app.ui.common.rememberHaptic
-import com.karotto.app.ui.theme.Brand
 import com.karotto.app.ui.theme.KarottoTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -153,7 +152,7 @@ fun TasksScreen(
                 shape = RoundedCornerShape(100.dp),
                 containerColor = if (state.notice?.error == true) colors.textRed else colors.textPrimary,
                 contentColor = if (colors.isDark) colors.contentBackground else Color.White,
-                actionColor = if (colors.isDark) Brand.b300 else Brand.b500,
+                actionColor = if (colors.isDark) KarottoTheme.palette.brand.b300 else KarottoTheme.palette.brand.b500,
             )
         }
     }

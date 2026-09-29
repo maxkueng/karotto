@@ -41,6 +41,7 @@ import com.karotto.app.AppContainer
 import com.karotto.app.data.store.ThemeMode
 import com.karotto.app.ui.common.SectionCaption
 import com.karotto.app.ui.theme.KarottoTheme
+import com.karotto.app.ui.theme.Themes
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -53,6 +54,8 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit, onSignedOut: () 
     val user by container.users.user.collectAsStateWithLifecycle(initialValue = null)
     val session by container.session.collectAsStateWithLifecycle()
     val themeMode by container.settings.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+    val themeId by container.settings.themeId.collectAsStateWithLifecycle(initialValue = Themes.DEFAULT_ID)
+    val theme = Themes.find(themeId)
     val haptics by container.settings.haptics.collectAsStateWithLifecycle(initialValue = true)
     val scope = rememberCoroutineScope()
     var signOutPrompt by remember { mutableStateOf(false) }
@@ -119,8 +122,20 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit, onSignedOut: () 
             SectionCaption("App", Modifier.padding(top = 24.dp, bottom = 4.dp))
             ChoiceRow(
                 label = "Theme",
-                value = themeMode.name.lowercase().replaceFirstChar(Char::uppercase),
+                value = theme.name,
+                options = Themes.all.map { it.id to it.name },
+            ) { id -> scope.launch { container.settings.setThemeId(id) } }
+            ChoiceRow(
+                label = "Colour mode",
+                value = if (theme.hasBothModes) {
+                    themeMode.name.lowercase().replaceFirstChar(Char::uppercase)
+                } else if (theme.dark != null) {
+                    "Dark only"
+                } else {
+                    "Light only"
+                },
                 options = ThemeMode.entries.map { it to it.name.lowercase().replaceFirstChar(Char::uppercase) },
+                enabled = theme.hasBothModes,
             ) { mode -> scope.launch { container.settings.setThemeMode(mode) } }
             SwitchRow("Haptic feedback", haptics) { on -> scope.launch { container.settings.setHaptics(on) } }
 
@@ -168,19 +183,25 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-private fun <T> ChoiceRow(label: String, value: String, options: List<Pair<T, String>>, onSelect: (T) -> Unit) {
+private fun <T> ChoiceRow(
+    label: String,
+    value: String,
+    options: List<Pair<T, String>>,
+    enabled: Boolean = true,
+    onSelect: (T) -> Unit,
+) {
     val colors = KarottoTheme.colors
     var open by remember { mutableStateOf(false) }
     Box {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { open = true }
+                .clickable(enabled = enabled) { open = true }
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(label, fontSize = 16.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-            Text(value, fontSize = 14.sp, color = colors.textBrand)
+            Text(label, fontSize = 16.sp, color = if (enabled) colors.textPrimary else colors.textQuad, modifier = Modifier.weight(1f))
+            Text(value, fontSize = 14.sp, color = if (enabled) colors.textBrand else colors.textQuad)
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             options.forEach { (option, text) ->
