@@ -1,4 +1,6 @@
 import { useNavigate } from '@solidjs/router';
+import Eye from 'lucide-solid/icons/eye';
+import EyeOff from 'lucide-solid/icons/eye-off';
 import {
   createSignal,
   Show,
@@ -8,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 import {
   FieldGroup,
   Input,
+  InputGroup,
+  InputGroupField,
   Label,
 } from '@/components/ui/Input';
 import {
@@ -61,6 +65,10 @@ export function LoginPage() {
     password,
     setPassword,
   ] = createSignal('');
+  const [
+    revealPassword,
+    setRevealPassword,
+  ] = createSignal(false);
   const [
     error,
     setError,
@@ -116,14 +124,23 @@ export function LoginPage() {
         </div>
         <FieldGroup>
           <Label for="login-password">Password</Label>
-          <Input
-            id="login-password"
-            size="sm"
-            type="password"
-            autocomplete="current-password"
-            value={password()}
-            onInput={(event) => setPassword(event.currentTarget.value)}
-          />
+          <InputGroup>
+            <InputGroupField
+              id="login-password"
+              type={revealPassword() ? 'text' : 'password'}
+              autocomplete="current-password"
+              value={password()}
+              onInput={(event) => setPassword(event.currentTarget.value)}
+            />
+            <Button
+              layout="icon"
+              size="sm"
+              aria-label={revealPassword() ? 'Hide password' : 'Show password'}
+              aria-pressed={revealPassword()}
+              onClick={() => setRevealPassword((shown) => !shown)}
+              icon={revealPassword() ? <EyeOff size={16} /> : <Eye size={16} />}
+            />
+          </InputGroup>
         </FieldGroup>
         <Show when={error()}>
           <Spacer top="md">

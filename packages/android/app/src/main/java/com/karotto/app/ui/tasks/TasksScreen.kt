@@ -69,7 +69,11 @@ import com.karotto.app.ui.common.label
 import com.karotto.app.ui.common.rememberHaptic
 import com.karotto.app.ui.theme.Brand
 import com.karotto.app.ui.theme.KarottoTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+/** Keeps the dropped order on screen until the store confirms it, so the card never snaps back. */
+private const val PENDING_ORDER_TIMEOUT_MS = 3_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -299,6 +303,7 @@ private fun TaskListPage(
     val visible = state.visible(type)
     val listState = rememberLazyListState()
     var dragOrder by remember { mutableStateOf(visible) }
+    var pendingOrder by remember { mutableStateOf<List<String>?>(null) }
     val reorder = rememberReorderState(
         listState = listState,
         onStart = { dragOrder = visible },
@@ -307,10 +312,23 @@ private fun TaskListPage(
         },
         onDrop = { id, index ->
             haptic()
+            pendingOrder = dragOrder.map { it.id }
             viewModel.move(type, id, index)
         },
     )
-    val order = if (reorder.draggingId != null) dragOrder else visible
+    val visibleIds = visible.map { it.id }
+    LaunchedEffect(visibleIds) { if (pendingOrder == visibleIds) pendingOrder = null }
+    LaunchedEffect(pendingOrder) {
+        if (pendingOrder != null) {
+            delay(PENDING_ORDER_TIMEOUT_MS)
+            pendingOrder = null
+        }
+    }
+    val order = when {
+        reorder.draggingId != null -> dragOrder
+        pendingOrder != null -> visible.sortedBy { pendingOrder?.indexOf(it.id)?.takeIf { index -> index >= 0 } ?: Int.MAX_VALUE }
+        else -> visible
+    }
     val callbacks = remember(viewModel, haptic) {
         CardCallbacks(
             onOpen = onOpenTask,
@@ -342,7 +360,9 @@ private fun TaskListPage(
                     ctx = state.dayContext,
                     dateFormat = state.preferences.dateFormat,
                     callbacks = callbacks,
-                    modifier = Modifier.reorderable(reorder, task.id, enabled = state.canReorder(type)),
+                    modifier = Modifier
+                        .then(if (reorder.draggingId == task.id) Modifier else Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null))
+                        .reorderable(reorder, task.id, enabled = state.canReorder(type)),
                 )
             }
         }

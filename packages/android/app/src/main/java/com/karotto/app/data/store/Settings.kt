@@ -20,6 +20,8 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("k
 
 data class Session(val serverUrl: String, val username: String, val token: String)
 
+data class LastLogin(val serverUrl: String?, val username: String?)
+
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 class Settings(private val context: Context, private val secure: SecureStore) {
@@ -36,9 +38,12 @@ class Settings(private val context: Context, private val secure: SecureStore) {
         val filterHabit = stringPreferencesKey("filter_habit")
         val filterDaily = stringPreferencesKey("filter_daily")
         val filterTodo = stringPreferencesKey("filter_todo")
+        val sessionStamp = longPreferencesKey("session_stamp")
     }
 
+    /** The stamp changes on every sign-in and sign-out so the flow re-reads the keystore token. */
     val session: Flow<Session?> = context.dataStore.data.map { prefs ->
+        prefs[Keys.sessionStamp] ?: return@map null
         val url = prefs[Keys.serverUrl] ?: return@map null
         val user = prefs[Keys.username] ?: return@map null
         val token = secure.get(TOKEN) ?: return@map null
@@ -52,17 +57,22 @@ class Settings(private val context: Context, private val secure: SecureStore) {
         context.dataStore.edit { prefs ->
             prefs[Keys.serverUrl] = serverUrl
             prefs[Keys.username] = username
+            prefs[Keys.sessionStamp] = System.currentTimeMillis()
         }
     }
 
+    /** Drops the token and cached data but keeps server and username to prefill the next login. */
     suspend fun clearSession() {
         secure.remove(TOKEN)
         context.dataStore.edit { prefs ->
-            prefs.remove(Keys.serverUrl)
-            prefs.remove(Keys.username)
+            prefs.remove(Keys.sessionStamp)
             prefs.remove(Keys.userJson)
             prefs.remove(Keys.lastSync)
         }
+    }
+
+    val lastLogin: Flow<LastLogin> = context.dataStore.data.map { prefs ->
+        LastLogin(prefs[Keys.serverUrl], prefs[Keys.username])
     }
 
     val user: Flow<User?> = context.dataStore.data.map { prefs ->

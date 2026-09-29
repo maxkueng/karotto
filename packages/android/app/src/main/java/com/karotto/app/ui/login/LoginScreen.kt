@@ -22,11 +22,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,8 +45,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.karotto.app.AppContainer
 import com.karotto.app.R
 import com.karotto.app.data.api.ApiException
@@ -53,8 +60,14 @@ import java.time.ZoneId
 
 @Composable
 fun LoginScreen(container: AppContainer, onSignedIn: () -> Unit) {
-    var serverUrl by remember { mutableStateOf("http://10.0.2.2:3210") }
+    val remembered by container.settings.lastLogin.collectAsStateWithLifecycle(initialValue = null)
+    var serverUrl by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
+    LaunchedEffect(remembered) {
+        val last = remembered ?: return@LaunchedEffect
+        if (serverUrl.isEmpty()) serverUrl = last.serverUrl ?: "https://"
+        if (username.isEmpty()) username = last.username ?: ""
+    }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
@@ -151,13 +164,25 @@ private fun LoginField(
     password: Boolean = false,
     onDone: (() -> Unit)? = null,
 ) {
+    var revealed by remember { mutableStateOf(false) }
     TextField(
         value = value,
         onValueChange = onChange,
         placeholder = { Text(placeholder, color = Brand.b600, fontSize = 18.sp) },
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
-        visualTransformation = if (password) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+        visualTransformation = if (password && !revealed) PasswordVisualTransformation() else VisualTransformation.None,
+        trailingIcon = if (!password) null else {
+            {
+                IconButton(onClick = { revealed = !revealed }) {
+                    Icon(
+                        imageVector = if (revealed) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                        contentDescription = if (revealed) "Hide password" else "Show password",
+                        tint = Brand.b600,
+                    )
+                }
+            }
+        },
         keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = if (onDone != null) ImeAction.Done else ImeAction.Next, autoCorrectEnabled = false),
         keyboardActions = KeyboardActions(onDone = { onDone?.invoke() }),
         colors = TextFieldDefaults.colors(

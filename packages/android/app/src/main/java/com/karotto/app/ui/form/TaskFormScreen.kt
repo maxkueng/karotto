@@ -71,6 +71,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -318,6 +319,7 @@ private fun HeaderField(
             onValueChange = onChange,
             singleLine = singleLine,
             minLines = minLines,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             textStyle = TextStyle(fontSize = 16.sp, color = Color.White, lineHeight = 22.sp),
             cursorBrush = SolidColor(Color.White),
             modifier = Modifier
@@ -442,6 +444,7 @@ private fun ChecklistEditor(state: FormState, palette: FormPalette, viewModel: T
                 BasicTextField(
                     value = item.text,
                     onValueChange = { viewModel.setChecklistText(item.key, it) },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     textStyle = TextStyle(fontSize = 14.sp, color = KarottoTheme.colors.textPrimary),
                     cursorBrush = SolidColor(palette.uiSub),
                     modifier = Modifier.weight(1f),
