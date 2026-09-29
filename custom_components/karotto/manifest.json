@@ -1,0 +1,12 @@
+{
+  "domain": "karotto",
+  "name": "Karotto",
+  "codeowners": ["@maxkueng"],
+  "config_flow": true,
+  "documentation": "https://github.com/maxkueng/karotto/blob/main/docs/HOME_ASSISTANT.md",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/maxkueng/karotto/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
