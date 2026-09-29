@@ -4,6 +4,7 @@ import Trash from 'lucide-solid/icons/trash';
 import {
   createSignal,
   For,
+  Index,
   Show,
 } from 'solid-js';
 import { Button } from '@/components/ui/Button';
@@ -251,18 +252,18 @@ export function TagFilterPanel(props: TagFilterPanelProps) {
             list = element;
           }}
           >
-            <For each={drafts()}>
+            <Index each={drafts()}>
               {(tag) => (
                 <EditRow gap="sm">
                   <DragHandle>
                     <GripVertical size={20} />
                   </DragHandle>
                   <TagNameInput
-                    value={tag.name}
+                    value={tag().name}
                     aria-label="Tag name"
                     onInput={(event) => {
                       const value = event.currentTarget.value;
-                      setDrafts((current) => current.map((item) => (item.id === tag.id
+                      setDrafts((current) => current.map((item) => (item.id === tag().id
                         ? {
                             ...item,
                             name: value,
@@ -273,14 +274,14 @@ export function TagFilterPanel(props: TagFilterPanelProps) {
                   <RevealOnRowHover>
                     <Button
                       layout="icon-danger"
-                      aria-label={`Delete tag ${tag.name}`}
+                      aria-label={`Delete tag ${tag().name}`}
                       icon={<Trash size={14} />}
-                      onClick={() => setDrafts((current) => current.filter((item) => item.id !== tag.id))}
+                      onClick={() => setDrafts((current) => current.filter((item) => item.id !== tag().id))}
                     />
                   </RevealOnRowHover>
                 </EditRow>
               )}
-            </For>
+            </Index>
           </EditList>
           <NewTagInput
             placeholder="New Tag"

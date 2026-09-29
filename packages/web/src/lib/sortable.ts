@@ -58,6 +58,7 @@ export function createSortable(
       ...rest
     } = options();
     instance?.destroy();
+    instance = undefined;
     if (!list) {
       return;
     }

@@ -180,3 +180,58 @@ test(
     await page.click('section[aria-label="To Do\'s"] button:has-text("Active")');
   },
 );
+
+async function openTagEditor(page: Page): Promise<void> {
+  const editButton = page.getByRole(
+    'button',
+    {
+      name: 'Edit Tags',
+      exact: true,
+    },
+  );
+  if (await editButton.count() === 0) {
+    await page.getByRole(
+      'button',
+      {
+        name: 'Tags',
+        exact: true,
+      },
+    ).click();
+  }
+  await editButton.click();
+}
+
+test(
+  'renames a tag without losing focus',
+  async ({ page }) => {
+    await login(page);
+    const stamp = Date.now().toString(36);
+    const name = `e2e tag ${stamp}`;
+    await openTagEditor(page);
+    await page.fill(
+      'input[placeholder="New Tag"]',
+      name,
+    );
+    await page.keyboard.press('Enter');
+    await expect(page.locator('button:has-text("Save Edits")')).toHaveCount(0);
+
+    await openTagEditor(page);
+    const field = page.locator('input[aria-label="Tag name"]').last();
+    await expect(field).toHaveValue(name);
+    await field.click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' renamed');
+    await expect(field).toHaveValue(`${name} renamed`);
+    await page.click('button:has-text("Save Edits")');
+    await expect(page.locator('button:has-text("Save Edits")')).toHaveCount(0);
+
+    await openTagEditor(page);
+    await expect(page.locator('input[aria-label="Tag name"]').last()).toHaveValue(`${name} renamed`);
+    await page.click(`[aria-label="Delete tag ${name} renamed"]`);
+    await page.click('button:has-text("Save Edits")');
+    await expect(page.locator('button:has-text("Save Edits")')).toHaveCount(0);
+
+    await openTagEditor(page);
+    await expect(page.locator(`input[aria-label="Tag name"][value="${name} renamed"]`)).toHaveCount(0);
+  },
+);
