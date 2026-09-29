@@ -56,6 +56,8 @@ create_user() {
   fi
   mkdir -p /opt/karotto /etc/karotto "$BACKUP_DIR"
   chown "$APP_USER:$APP_USER" /opt/karotto "$BACKUP_DIR"
+  # useradd made /opt/karotto a 700 home; the karotto client needs to read the checkout from other accounts.
+  chmod 755 /opt/karotto
   chown root:"$APP_USER" /etc/karotto
   chmod 750 /etc/karotto
 }
