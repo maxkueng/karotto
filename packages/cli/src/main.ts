@@ -6,6 +6,7 @@ import { registerApi } from '@/commands/api';
 import { registerAuth } from '@/commands/auth';
 import { registerCron } from '@/commands/cron';
 import { registerEvents } from '@/commands/events';
+import { registerMcp } from '@/commands/mcp';
 import { registerScore } from '@/commands/score';
 import { registerTags } from '@/commands/tags';
 import { registerTasks } from '@/commands/tasks';
@@ -41,6 +42,7 @@ const registered = [
   registerTags,
   registerCron,
   registerEvents,
+  registerMcp,
   registerApi,
 ].reduce(
   (

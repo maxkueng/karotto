@@ -98,6 +98,15 @@ What changed while you were away: `karotto tasks list --completed --json`
 lists completed to-dos; `karotto tasks show <task> --json` shows streak,
 schedule and `isDue`.
 
+## MCP instead of the shell
+
+The same operations are available as MCP tools: run `karotto mcp` as a stdio
+server (it reads the same stored login or KAROTTO_URL/KAROTTO_TOKEN). Tools:
+list_tasks, get_task, create_task, update_task, delete_task, score_task,
+toggle_checklist_item, list_tags, create_tag, rename_tag, delete_tag,
+cron_status, run_cron. Prefer the shell commands when both are available;
+they cost fewer tokens.
+
 ## Cautions
 
 - Ask before deleting tasks or tags, and before `clear-completed`.

@@ -119,7 +119,12 @@ karotto cron status --json
 ```
 
 Every command takes `--json`. `KAROTTO_URL` and `KAROTTO_TOKEN` override the
-stored login for scripts. The deploy script installs it next to the server;
+stored login for scripts. `karotto mcp` runs the same operations as a Model
+Context Protocol server over stdio for agents that speak MCP; register it as
+
+```json
+{ "mcpServers": { "karotto": { "command": "karotto", "args": ["mcp"] } } }
+``` The deploy script installs it next to the server;
 elsewhere build it with `npm run build -w @karotto/cli` and run
 `packages/cli/dist/main.js`. `skills/karotto/SKILL.md` is a drop-in skill for
 agents that can run shell commands.
