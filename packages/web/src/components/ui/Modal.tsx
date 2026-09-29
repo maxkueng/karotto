@@ -1,10 +1,12 @@
 import type { JSX } from 'solid-js';
 import {
+  createEffect,
   onCleanup,
   onMount,
   Show,
 } from 'solid-js';
 import { Portal } from 'solid-js/web';
+import { lockScroll } from '@/lib/scrollLock';
 import { twc } from '@/styles/twc';
 
 const Backdrop = twc(
@@ -45,6 +47,13 @@ export function Modal(props: ModalProps) {
   const requestClose = () => {
     props.onClose?.();
   };
+
+  createEffect(() => {
+    if (!props.open) {
+      return;
+    }
+    onCleanup(lockScroll());
+  });
 
   onMount(() => {
     const onKey = (event: KeyboardEvent) => {
