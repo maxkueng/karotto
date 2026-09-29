@@ -31,7 +31,7 @@ const ReminderRow = twc(
 
 const ClockIcon = twc(
   AlarmClock,
-  ['text-gray-200'],
+  ['text-neutral-200'],
 );
 
 const TimeInput = twc(

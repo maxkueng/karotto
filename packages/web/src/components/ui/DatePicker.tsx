@@ -41,7 +41,7 @@ const PickerRoot = twc(
 
 const Placeholder = twc(
   'span',
-  ['text-gray-200'],
+  ['text-neutral-200'],
 );
 
 const CalendarPanel = twc(
@@ -57,7 +57,7 @@ const QuickDateBand = twc(
   [
     'mb-2',
     'h-10',
-    'bg-gray-700',
+    'bg-neutral-700',
     'px-2',
   ],
 );
@@ -75,7 +75,7 @@ const MonthLabel = twc(
   [
     'text-[14px]',
     'font-bold',
-    'text-gray-50',
+    'text-neutral-50',
   ],
 );
 
@@ -94,7 +94,7 @@ const WeekdayHeading = twc(
     'py-1',
     'text-[12px]',
     'font-bold',
-    'text-gray-100',
+    'text-neutral-100',
   ],
 );
 

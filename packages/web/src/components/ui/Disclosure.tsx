@@ -4,7 +4,7 @@ import { twc } from '@/styles/twc';
 export const DisclosureChevron = twc(
   ChevronDown,
   [
-    'text-gray-200',
+    'text-neutral-200',
     'transition-transform',
   ],
   {

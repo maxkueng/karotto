@@ -249,7 +249,7 @@ function TaskModalBody(props: BodyProps) {
     setError,
   ] = createSignal<string | null>(null);
 
-  const palette = createMemo(() => (props.mode.kind === 'edit' ? paletteFor(props.mode.task) : palettes.purple));
+  const palette = createMemo(() => (props.mode.kind === 'edit' ? paletteFor(props.mode.task) : palettes.brand));
 
   const canSave = () => draft.text.trim() !== '' && !saving();
 
@@ -343,8 +343,6 @@ function TaskModalBody(props: BodyProps) {
     <Modal
       open
       label={title()}
-      closeOnBackdrop={false}
-      closeOnEscape={false}
       onClose={props.onClose}
     >
       <form

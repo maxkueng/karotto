@@ -4,17 +4,17 @@ const fieldBase = [
   'w-full',
   'rounded-xs',
   'border',
-  'border-gray-400',
-  'bg-white',
+  'border-neutral-400',
+  'bg-surface',
   'text-[14px]',
   'leading-[1.43]',
-  'text-gray-50',
-  'placeholder:text-gray-200',
-  'hover:border-gray-300',
-  'focus:border-purple-400',
+  'text-neutral-50',
+  'placeholder:text-neutral-200',
+  'hover:border-neutral-300',
+  'focus:border-brand-400',
   'focus:outline-none',
   'disabled:opacity-65',
-  'disabled:bg-gray-700',
+  'disabled:bg-neutral-700',
 ];
 
 export const Input = twc(
@@ -77,9 +77,9 @@ export const InputGroup = twc(
     'items-center',
     'rounded-xs',
     'border',
-    'border-gray-400',
-    'bg-white',
-    'focus-within:border-purple-400',
+    'border-neutral-400',
+    'bg-surface',
+    'focus-within:border-brand-400',
   ],
 );
 
@@ -91,8 +91,8 @@ export const InputGroupAddon = twc(
     'w-8',
     'items-center',
     'justify-center',
-    'bg-gray-600',
-    'text-gray-200',
+    'bg-neutral-600',
+    'text-neutral-200',
   ],
 );
 

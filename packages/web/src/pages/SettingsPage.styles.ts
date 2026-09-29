@@ -11,6 +11,50 @@ export const Page = twc(
   ],
 );
 
+export const ThemeGrid = twc(
+  'div',
+  [
+    'grid',
+    'grid-cols-2',
+    'gap-3',
+    'sm:grid-cols-3',
+    'md:grid-cols-4',
+  ],
+);
+
+export const ThemeName = twc(
+  'span',
+  [
+    'text-[14px]',
+    'font-bold',
+  ],
+);
+
+export const ThemeModes = twc(
+  'span',
+  [
+    'text-[12px]',
+    'text-neutral-200',
+  ],
+);
+
+export const SwatchRow = twc(
+  'span',
+  [
+    'flex',
+    'h-6',
+    'overflow-hidden',
+    'rounded-xs',
+    'border',
+    'border-neutral-500',
+  ],
+);
+
+export const Swatch = twc(
+  'span',
+  ['flex-1'],
+);
+
 export const NarrowSlot = twc(
   'div',
   ['max-w-xs'],
@@ -25,7 +69,7 @@ export const CodeChip = twc(
   'code',
   [
     'rounded-xs',
-    'bg-gray-600',
+    'bg-neutral-600',
     'px-1',
   ],
 );
@@ -67,7 +111,7 @@ export const TokenHeadRow = twc(
   'tr',
   [
     'text-[12px]',
-    'text-gray-100',
+    'text-neutral-100',
   ],
 );
 
@@ -83,7 +127,7 @@ export const TokenRow = twc(
   'tr',
   [
     'border-t',
-    'border-gray-600',
+    'border-neutral-600',
   ],
 );
 
@@ -100,12 +144,12 @@ export const TokenCell = twc(
         ],
         muted: [
           'text-[12px]',
-          'text-gray-100',
+          'text-neutral-100',
         ],
         actions: ['text-right'],
         empty: [
           'text-[12px]',
-          'text-gray-200',
+          'text-neutral-200',
         ],
       },
     },

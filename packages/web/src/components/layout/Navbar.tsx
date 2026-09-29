@@ -15,7 +15,7 @@ const TopBar = twc(
   [
     'z-[1080]',
     'min-h-14',
-    'bg-purple-100',
+    'bg-nav',
     'shadow-nav',
   ],
 );
@@ -51,7 +51,7 @@ const RightSide = twc(
   ['ml-auto'],
 );
 
-const activeLinkClass = 'shadow-[inset_0_-4px_0_var(--color-purple-300)]';
+const activeLinkClass = 'shadow-[inset_0_-4px_0_var(--color-brand-300)]';
 
 export function Navbar() {
   const session = useSession();

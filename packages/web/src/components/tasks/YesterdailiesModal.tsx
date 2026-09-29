@@ -30,7 +30,7 @@ const DailyList = twc(
     'max-h-[50vh]',
     'overflow-y-auto',
     'rounded-sm',
-    'bg-gray-600',
+    'bg-neutral-600',
     'p-2',
     'text-left',
   ],

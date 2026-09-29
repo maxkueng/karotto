@@ -32,7 +32,7 @@ const LoginScreen = twc(
     'min-h-screen',
     'items-center',
     'justify-center',
-    'bg-purple-100',
+    'bg-nav',
     'px-3',
   ],
 );
@@ -43,7 +43,7 @@ const LoginCard = twc(
     'w-full',
     'max-w-[400px]',
     'rounded-md',
-    'bg-white',
+    'bg-surface',
     'p-8',
     'shadow-modal',
   ],

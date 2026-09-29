@@ -19,6 +19,7 @@ export function createDismissable(options: DismissableOptions): void {
   };
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
+      event.preventDefault();
       options.onDismiss();
     }
   };

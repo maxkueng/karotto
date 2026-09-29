@@ -12,65 +12,58 @@ export type TaskPalette = {
   headingOnBg: string;
 };
 
-const black = 'rgba(26, 24, 29, 0.25)';
-const blackHover = 'rgba(26, 24, 29, 0.5)';
+const overlay = (percent: number) => `color-mix(in oklab, var(--color-black) ${percent}%, transparent)`;
 
-export const palettes: Record<TaskColor | 'purple', TaskPalette> = {
-  worst: {
-    bg: '#de3f3f',
-    dark: '#6c0406',
-    innerHabit: black,
-    innerHabitHover: blackHover,
-    headingOnBg: '#ffffff',
-  },
-  worse: {
-    bg: '#ff6165',
-    dark: '#6c0406',
-    innerHabit: black,
-    innerHabitHover: blackHover,
-    headingOnBg: '#6c0406',
-  },
-  bad: {
-    bg: '#ff944c',
-    dark: '#7f3300',
-    innerHabit: 'rgba(127, 51, 0, 0.25)',
-    innerHabitHover: 'rgba(127, 51, 0, 0.5)',
-    headingOnBg: '#7f3300',
-  },
-  neutral: {
-    bg: '#ffbe5d',
-    dark: '#794b00',
-    innerHabit: 'rgba(121, 75, 0, 0.25)',
-    innerHabitHover: 'rgba(121, 75, 0, 0.5)',
-    headingOnBg: '#794b00',
-  },
-  good: {
-    bg: '#24cc8f',
-    dark: '#005737',
-    innerHabit: black,
-    innerHabitHover: blackHover,
-    headingOnBg: '#005737',
-  },
-  better: {
-    bg: '#3bcad7',
-    dark: '#005158',
-    innerHabit: black,
-    innerHabitHover: blackHover,
-    headingOnBg: '#005158',
-  },
-  best: {
-    bg: '#50b5e9',
-    dark: '#033f5e',
-    innerHabit: black,
-    innerHabitHover: blackHover,
-    headingOnBg: '#033f5e',
-  },
-  purple: {
-    bg: '#6133b4',
-    dark: '#6133b4',
-    innerHabit: black,
-    innerHabitHover: blackHover,
-    headingOnBg: '#ffffff',
+/** Controls sit on the hue's darker steps so they stay visible on pastel dark-theme strips. */
+function huePalette(
+  hue: string,
+  headingOnBg: string,
+): TaskPalette {
+  return {
+    bg: `var(--color-${hue}-100)`,
+    dark: `var(--color-${hue}-1)`,
+    innerHabit: `var(--color-${hue}-10)`,
+    innerHabitHover: `var(--color-${hue}-5)`,
+    headingOnBg,
+  };
+}
+
+/** Task colours resolve through the theme's CSS variables, so every theme restyles them. */
+export const palettes: Record<TaskColor | 'brand', TaskPalette> = {
+  worst: huePalette(
+    'maroon',
+    'var(--color-white)',
+  ),
+  worse: huePalette(
+    'red',
+    'var(--color-red-1)',
+  ),
+  bad: huePalette(
+    'orange',
+    'var(--color-orange-1)',
+  ),
+  neutral: huePalette(
+    'yellow',
+    'var(--color-yellow-1)',
+  ),
+  good: huePalette(
+    'green',
+    'var(--color-green-1)',
+  ),
+  better: huePalette(
+    'teal',
+    'var(--color-teal-1)',
+  ),
+  best: huePalette(
+    'blue',
+    'var(--color-blue-1)',
+  ),
+  brand: {
+    bg: 'var(--color-brand-300)',
+    dark: 'var(--color-brand-300)',
+    innerHabit: overlay(25),
+    innerHabitHover: overlay(50),
+    headingOnBg: 'var(--color-white)',
   },
 };
 

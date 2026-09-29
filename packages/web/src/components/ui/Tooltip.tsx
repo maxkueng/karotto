@@ -21,7 +21,7 @@ const TooltipBubble = twc(
     'max-w-[220px]',
     '-translate-x-1/2',
     'rounded-sm',
-    'bg-gray-10/95',
+    'bg-neutral-10/95',
     'px-3',
     'py-2',
     'text-[12px]',

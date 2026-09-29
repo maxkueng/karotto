@@ -87,7 +87,7 @@ export const Card = twc(
   'section',
   [
     'rounded-sm',
-    'bg-white',
+    'bg-surface',
     'p-6',
     'shadow-card',
   ],
@@ -108,7 +108,7 @@ export const FloatingPanel = twc(
     'absolute',
     'z-[1100]',
     'rounded-xs',
-    'bg-white',
+    'bg-popover',
     'shadow-btn-hover',
   ],
   {

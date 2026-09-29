@@ -9,7 +9,10 @@ import {
 import type { Db } from '@/db/client';
 import { tags } from '@/db/schema';
 import type { TagRow } from '@/db/schema';
-import { ApiError } from '@/lib/errors';
+import {
+  ApiError,
+  isUniqueViolation,
+} from '@/lib/errors';
 import { mergeOrder } from '@/lib/order';
 import { writePositions } from '@/lib/sql';
 
@@ -71,26 +74,42 @@ export async function assertTagsExist(
   }
 }
 
+function tagConflictOr(error: unknown): unknown {
+  return isUniqueViolation(
+    error,
+    'tags_user_name_idx',
+  )
+    ? ApiError.conflict(
+        'tag_exists',
+        'A tag with that name already exists',
+      )
+    : error;
+}
+
 export async function createTag(
   db: Db,
   userId: string,
   name: string,
   now: Date,
 ): Promise<TagRow> {
-  const [row] = await db
-    .insert(tags)
-    .values({
-      userId,
-      name,
-      position: sql`(select coalesce(max(${tags.position}), -1) + 1 from ${tags} where ${tags.userId} = ${userId})`,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning();
-  if (!row) {
-    throw new Error('Insert returned no row');
+  try {
+    const [row] = await db
+      .insert(tags)
+      .values({
+        userId,
+        name,
+        position: sql`(select coalesce(max(${tags.position}), -1) + 1 from ${tags} where ${tags.userId} = ${userId})`,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    if (!row) {
+      throw new Error('Insert returned no row');
+    }
+    return row;
+  } catch (error) {
+    throw tagConflictOr(error);
   }
-  return row;
 }
 
 export async function updateTag(
@@ -100,23 +119,29 @@ export async function updateTag(
   name: string,
   now: Date,
 ): Promise<TagRow> {
-  const [row] = await db
-    .update(tags)
-    .set({
-      name,
-      updatedAt: now,
-    })
-    .where(and(
-      eq(
-        tags.userId,
-        userId,
-      ),
-      eq(
-        tags.id,
-        id,
-      ),
-    ))
-    .returning();
+  let updated: TagRow[];
+  try {
+    updated = await db
+      .update(tags)
+      .set({
+        name,
+        updatedAt: now,
+      })
+      .where(and(
+        eq(
+          tags.userId,
+          userId,
+        ),
+        eq(
+          tags.id,
+          id,
+        ),
+      ))
+      .returning();
+  } catch (error) {
+    throw tagConflictOr(error);
+  }
+  const [row] = updated;
   if (!row) {
     throw ApiError.notFound('Tag not found');
   }

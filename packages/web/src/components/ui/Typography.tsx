@@ -5,7 +5,7 @@ export const Heading = twc(
   [
     'font-condensed',
     'font-bold',
-    'text-gray-10',
+    'text-neutral-10',
   ],
   {
     variants: {
@@ -15,7 +15,7 @@ export const Heading = twc(
           'text-[24px]',
           'leading-[1.33]',
           'font-sans',
-          'text-purple-300',
+          'text-brand-300',
         ],
         section: [
           'text-[20px]',
@@ -34,13 +34,13 @@ export const Heading = twc(
         ],
         welcome: [
           'text-[24px]',
-          'text-purple-200',
+          'text-brand-200',
         ],
         brand: ['text-[24px]'],
         empty: [
           'text-[16px]',
           'font-normal',
-          'text-gray-300',
+          'text-neutral-300',
         ],
         danger: [
           'text-[20px]',
@@ -60,27 +60,27 @@ export const Text = twc(
       tone: {
         body: [
           'text-[14px]',
-          'text-gray-50',
+          'text-neutral-50',
         ],
         bold: [
           'text-[14px]',
           'font-bold',
-          'text-gray-50',
+          'text-neutral-50',
         ],
         help: [
           'text-[12px]',
           'leading-[1.33]',
-          'text-gray-100',
+          'text-neutral-100',
         ],
         muted: [
           'text-[12px]',
           'leading-[1.33]',
-          'text-gray-200',
+          'text-neutral-200',
         ],
         faint: [
           'text-[12px]',
           'leading-[1.33]',
-          'text-gray-300',
+          'text-neutral-300',
         ],
         error: [
           'text-[12px]',
@@ -90,7 +90,7 @@ export const Text = twc(
         summary: [
           'text-[12px]',
           'leading-4',
-          'text-gray-50',
+          'text-neutral-50',
         ],
       },
     },

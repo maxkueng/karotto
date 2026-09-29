@@ -35,18 +35,18 @@ const CheckboxBox = twc(
     'border-2',
     'transition-colors',
     'peer-focus-visible:ring-2',
-    'peer-focus-visible:ring-purple-400/50',
+    'peer-focus-visible:ring-brand-400/50',
   ],
   {
     variants: {
       checked: {
         true: [
-          'border-purple-400',
-          'bg-purple-400',
-          'text-white',
+          'border-brand-300',
+          'bg-brand-300',
+          'text-page',
         ],
         false: [
-          'border-gray-200',
+          'border-neutral-200',
           'bg-transparent',
         ],
       },
@@ -67,7 +67,7 @@ export const ControlText = twc(
   [
     'text-[14px]',
     'leading-[1.71]',
-    'text-gray-50',
+    'text-neutral-50',
     'break-words',
   ],
 );

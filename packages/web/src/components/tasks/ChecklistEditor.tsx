@@ -30,7 +30,7 @@ const ItemRow = twc(
     'relative',
     'h-8',
     'border-b',
-    'border-gray-500',
+    'border-neutral-500',
   ],
   {
     variants: {
@@ -51,7 +51,7 @@ const GripHandle = twc(
     '-left-4',
     'top-1',
     'cursor-grab',
-    'text-gray-200',
+    'text-neutral-200',
     'opacity-0',
     'group-hover/row:opacity-100',
   ],
@@ -73,8 +73,8 @@ const ItemInput = twc(
     'p-0',
     'text-[14px]',
     'leading-[1.71]',
-    'text-gray-50',
-    'placeholder:text-gray-200',
+    'text-neutral-50',
+    'placeholder:text-neutral-200',
     'focus:outline-none',
   ],
 );
@@ -97,7 +97,7 @@ const NewItemRow = twc(
       topBorder: {
         true: [
           'border-t',
-          'border-gray-500',
+          'border-neutral-500',
         ],
         false: [],
       },
@@ -110,7 +110,7 @@ const PlusIcon = twc(
   Plus,
   [
     'ml-[11px]',
-    'text-gray-200',
+    'text-neutral-200',
   ],
 );
 

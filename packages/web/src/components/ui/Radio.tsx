@@ -32,16 +32,16 @@ const RadioRing = twc(
     'border-2',
     'transition-colors',
     'peer-focus-visible:ring-2',
-    'peer-focus-visible:ring-purple-400/50',
+    'peer-focus-visible:ring-brand-400/50',
   ],
   {
     variants: {
       checked: {
         true: [
-          'border-purple-400',
-          'bg-gray-700',
+          'border-brand-400',
+          'bg-neutral-700',
         ],
-        false: ['border-gray-200'],
+        false: ['border-neutral-200'],
       },
     },
     defaultVariants: { checked: 'false' },
@@ -54,7 +54,7 @@ const RadioDot = twc(
     'h-[6px]',
     'w-[6px]',
     'rounded-full',
-    'bg-purple-400',
+    'bg-brand-400',
   ],
   {
     variants: {

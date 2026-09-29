@@ -137,6 +137,10 @@ export const tags = pgTable(
       table.userId,
       table.position,
     ),
+    uniqueIndex('tags_user_name_idx').on(
+      table.userId,
+      sql`lower(${table.name})`,
+    ),
   ],
 );
 

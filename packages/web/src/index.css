@@ -5,73 +5,9 @@
 @import "@fontsource/roboto-condensed/400.css";
 @import "@fontsource/roboto-condensed/700.css";
 
+@import "./theme.generated.css";
+
 @theme {
-  --color-*: initial;
-  --color-white: #ffffff;
-  --color-black: #1a181d;
-  --color-transparent: transparent;
-  --color-current: currentColor;
-
-  --color-gray-10: #34313a;
-  --color-gray-50: #4e4a57;
-  --color-gray-100: #686274;
-  --color-gray-200: #878190;
-  --color-gray-300: #a5a1ac;
-  --color-gray-400: #c3c0c7;
-  --color-gray-500: #e1e0e3;
-  --color-gray-600: #edecee;
-  --color-gray-700: #f9f9f9;
-
-  --color-red-1: #6c0406;
-  --color-red-10: #f23035;
-  --color-red-50: #f74e52;
-  --color-red-100: #ff6165;
-  --color-red-500: #ffb6b8;
-
-  --color-maroon-10: #b01515;
-  --color-maroon-50: #c92b2b;
-  --color-maroon-100: #de3f3f;
-  --color-maroon-500: #f19595;
-
-  --color-orange-1: #7f3300;
-  --color-orange-10: #f47825;
-  --color-orange-50: #fa8537;
-  --color-orange-100: #ff944c;
-  --color-orange-500: #ffc8a7;
-
-  --color-yellow-1: #794b00;
-  --color-yellow-5: #ee9109;
-  --color-yellow-10: #ffa624;
-  --color-yellow-50: #ffb445;
-  --color-yellow-100: #ffbe5d;
-  --color-yellow-500: #fedead;
-
-  --color-green-1: #005737;
-  --color-green-10: #1ca372;
-  --color-green-50: #20b780;
-  --color-green-100: #24cc8f;
-  --color-green-500: #77f4c7;
-
-  --color-teal-1: #005158;
-  --color-teal-10: #26a0ab;
-  --color-teal-50: #34b5c1;
-  --color-teal-100: #3bcad7;
-  --color-teal-500: #8eedf6;
-
-  --color-blue-1: #033f5e;
-  --color-blue-10: #2995cd;
-  --color-blue-50: #46a7d9;
-  --color-blue-100: #50b5e9;
-  --color-blue-500: #a9dcf6;
-
-  --color-purple-50: #36205d;
-  --color-purple-100: #432874;
-  --color-purple-200: #4f2a93;
-  --color-purple-300: #6133b4;
-  --color-purple-400: #925cf3;
-  --color-purple-500: #bda8ff;
-  --color-purple-600: #d5c8ff;
-
   --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
   --font-condensed: "Roboto Condensed", "Roboto", ui-sans-serif, sans-serif;
 
@@ -92,8 +28,8 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--color-gray-700);
-    color: var(--color-gray-50);
+    background: var(--color-page);
+    color: var(--color-neutral-50);
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.43;
@@ -118,8 +54,14 @@
     cursor: pointer;
   }
 
+  /* Native select popups take their colours from the option elements, not the theme variables. */
+  option {
+    background: var(--color-popover);
+    color: var(--color-neutral-50);
+  }
+
   a {
-    color: var(--color-purple-300);
+    color: var(--color-brand-300);
     text-decoration: none;
   }
 
@@ -141,7 +83,7 @@
   }
 
   .markdown a {
-    color: var(--color-purple-300);
+    color: var(--color-brand-300);
   }
 
   .markdown img {
@@ -151,7 +93,7 @@
   .markdown code {
     font-family: ui-monospace, monospace;
     font-size: 0.9em;
-    background: rgba(26, 24, 29, 0.06);
+    background: color-mix(in oklab, var(--color-ink) 6%, transparent);
     padding: 0 3px;
     border-radius: 2px;
   }
@@ -159,7 +101,7 @@
   .markdown blockquote {
     margin: 0 0 8px;
     padding: 0 16px;
-    border-left: 4px solid var(--color-gray-500);
+    border-left: 4px solid var(--color-neutral-500);
   }
 
   .markdown ul,
@@ -174,7 +116,7 @@
   .markdown h4 {
     font-family: var(--font-condensed);
     font-weight: 400;
-    color: var(--color-gray-10);
+    color: var(--color-neutral-10);
     margin: 0 0 4px;
   }
 

@@ -57,6 +57,7 @@ beforeAll(async () => {
       password: 'correct horse battery',
       timezone: 'Europe/Zurich',
     },
+    now,
   );
   app = await buildApp({
     db: handle.db,
@@ -563,6 +564,41 @@ describe(
           `/tasks/${todoId}`,
         );
         expect(gone.status).toBe(404);
+      },
+    );
+  },
+);
+
+describe(
+  'tag names',
+  () => {
+    it(
+      'rejects duplicate names per user, ignoring case',
+      async () => {
+        const first = await call(
+          'POST',
+          '/tags',
+          { name: 'Errands' },
+        );
+        expect(first.status).toBe(201);
+        const dupe = await call(
+          'POST',
+          '/tags',
+          { name: 'errands ' },
+        );
+        expect(dupe.status).toBe(409);
+        expect((dupe.body as { error: { code: string } }).error.code).toBe('tag_exists');
+        const other = await call(
+          'POST',
+          '/tags',
+          { name: 'Chores' },
+        );
+        const rename = await call(
+          'PATCH',
+          `/tags/${(other.body as { id: string }).id}`,
+          { name: 'ERRANDS' },
+        );
+        expect(rename.status).toBe(409);
       },
     );
   },

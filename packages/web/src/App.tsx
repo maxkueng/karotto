@@ -30,7 +30,7 @@ const LoadingScreen = twc(
     'flex-1',
     'items-center',
     'justify-center',
-    'text-gray-200',
+    'text-neutral-200',
   ],
 );
 

@@ -35,7 +35,7 @@ const headerInputBase = [
   'py-1',
   'text-[14px]',
   'leading-[1.71]',
-  'text-gray-10',
+  'text-black',
   'outline-none',
   'placeholder:text-(--task-dark)',
   'placeholder:opacity-70',
@@ -66,7 +66,7 @@ export const ModalBody = twc(
   [
     'px-6',
     'pb-2',
-    'text-gray-50',
+    'text-neutral-50',
   ],
 );
 
@@ -90,10 +90,10 @@ export const HabitOptionCircle = twc(
         ],
         false: [
           'border-2',
-          'border-gray-300',
+          'border-neutral-300',
           'bg-transparent',
-          'text-gray-200',
-          'group-hover/opt:border-purple-300',
+          'text-neutral-200',
+          'group-hover/opt:border-brand-300',
         ],
       },
     },
@@ -115,8 +115,8 @@ export const HabitOptionLabel = twc(
           'text-(--task-bg)',
         ],
         false: [
-          'text-gray-100',
-          'group-hover/opt:text-purple-300',
+          'text-neutral-100',
+          'group-hover/opt:text-brand-300',
         ],
       },
     },
@@ -130,7 +130,7 @@ export const AdvancedSection = twc(
     '-mx-6',
     'mt-4',
     'min-h-12',
-    'bg-gray-700',
+    'bg-neutral-700',
     'px-6',
     'py-3',
   ],

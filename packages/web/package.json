@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc",
     "clean": "rm -rf dist",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "theme:css": "node scripts/theme-css.ts"
   },
   "dependencies": {
     "@fontsource/roboto": "^5.3.0",

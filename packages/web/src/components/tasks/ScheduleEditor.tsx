@@ -53,7 +53,7 @@ const Warning = twc(
     'mt-1',
     'text-[12px]',
     'leading-4',
-    'text-gray-50',
+    'text-neutral-50',
   ],
 );
 

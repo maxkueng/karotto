@@ -33,7 +33,7 @@ const Panel = twc(
     'w-full',
     'min-w-[300px]',
     'rounded-xs',
-    'bg-white',
+    'bg-surface',
     'px-6',
     'text-[14px]',
     'leading-[1.43]',
@@ -47,7 +47,7 @@ const Category = twc(
   'div',
   [
     'border-b',
-    'border-gray-600',
+    'border-neutral-600',
     'py-6',
   ],
 );
@@ -86,8 +86,8 @@ const DragHandle = twc(
   [
     'drag-handle',
     'cursor-grab',
-    'text-gray-400',
-    'hover:text-gray-200',
+    'text-neutral-400',
+    'hover:text-neutral-200',
   ],
 );
 
@@ -96,11 +96,11 @@ const TagNameInput = twc(
   [
     'flex-1',
     'border-b',
-    'border-gray-500',
+    'border-neutral-500',
     'bg-transparent',
     'py-1',
     'text-[14px]',
-    'focus:border-purple-500',
+    'focus:border-brand-500',
     'focus:outline-none',
   ],
 );
@@ -111,13 +111,13 @@ const NewTagInput = twc(
     'mt-2',
     'w-full',
     'border-b',
-    'border-gray-500',
+    'border-neutral-500',
     'bg-transparent',
     'py-1',
     'pl-6',
     'text-[14px]',
-    'placeholder:text-gray-200',
-    'focus:border-purple-500',
+    'placeholder:text-neutral-200',
+    'focus:border-brand-500',
     'focus:outline-none',
   ],
 );

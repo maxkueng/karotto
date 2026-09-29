@@ -20,14 +20,14 @@ export const Card = twc(
     'group',
     'relative',
     'rounded-sm',
-    'bg-white',
+    'bg-surface',
     'shadow-card',
     'transition-[box-shadow,outline-color]',
     'duration-150',
     'hover:shadow-card-hover',
     'hover:outline',
     'hover:outline-1',
-    'hover:outline-purple-400',
+    'hover:outline-brand-400',
     'focus-within:shadow-card-hover',
   ],
 );
@@ -60,7 +60,7 @@ export const HabitControlStrip = twc(
       },
       enabled: {
         true: ['bg-(--task-bg)'],
-        false: ['bg-gray-600'],
+        false: ['bg-neutral-600'],
       },
     },
     defaultVariants: {
@@ -82,7 +82,7 @@ export const CheckControlStrip = twc(
   {
     variants: {
       dimmed: {
-        true: ['bg-gray-200'],
+        true: ['bg-neutral-300'],
         false: ['bg-(--task-bg)'],
       },
     },
@@ -103,8 +103,8 @@ export const CheckGlyph = twc(
         ],
       },
       dimmed: {
-        true: ['text-gray-10'],
-        false: ['text-(--task-dark)'],
+        true: ['text-surface'],
+        false: ['text-white'],
       },
     },
     defaultVariants: {
@@ -128,8 +128,8 @@ export const CardBody = twc(
         checkable: ['rounded-r-sm'],
       },
       dimmed: {
-        true: ['bg-gray-600'],
-        false: ['bg-white'],
+        true: ['bg-neutral-600'],
+        false: ['bg-surface'],
       },
     },
     defaultVariants: {
@@ -172,7 +172,7 @@ export const TaskTitle = twc(
     'font-condensed',
     'text-[16px]',
     'leading-[1.25]',
-    'text-gray-10',
+    'text-neutral-10',
   ],
   {
     variants: {
@@ -207,7 +207,7 @@ export const TaskNotes = twc(
     'min-w-0',
     'break-words',
     'pr-5',
-    'text-gray-100',
+    'text-neutral-100',
   ],
   {
     variants: {
@@ -264,7 +264,7 @@ export const ChecklistText = twc(
     variants: {
       completed: {
         true: [
-          'text-gray-300',
+          'text-neutral-300',
           'line-through',
         ],
         false: [],
@@ -281,7 +281,7 @@ export const IconsRow = twc(
     'px-2',
     'text-[12px]',
     'leading-[1.33]',
-    'text-gray-100',
+    'text-neutral-100',
   ],
 );
 
@@ -326,7 +326,7 @@ export const TagsAnchor = twc(
 
 export const TagsIcon = twc(
   TagIcon,
-  ['hover:text-purple-500'],
+  ['hover:text-brand-500'],
 );
 
 export const TagsPopover = twc(
@@ -341,11 +341,11 @@ export const TagsPopover = twc(
     'w-max',
     'max-w-[300px]',
     'rounded-md',
-    'bg-gray-10/95',
+    'bg-neutral-10/95',
     'px-4',
     'py-3',
     'text-[12px]',
-    'text-gray-500',
+    'text-neutral-500',
     'opacity-0',
     'shadow-card',
     'transition-opacity',

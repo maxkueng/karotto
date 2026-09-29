@@ -89,6 +89,7 @@ export type CreateUserInput = {
 export async function createUser(
   db: Db,
   input: CreateUserInput,
+  now: Date = new Date(),
 ): Promise<UserRow> {
   const passwordHash = await hashPassword(input.password);
   try {
@@ -98,6 +99,9 @@ export async function createUser(
         username: input.username,
         passwordHash,
         timezone: input.timezone ?? 'UTC',
+        lastCron: now,
+        createdAt: now,
+        updatedAt: now,
       })
       .returning();
     if (!row) {

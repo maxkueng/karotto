@@ -28,7 +28,7 @@ export const TaskList = twc(
     'flex-1',
     'flex-col',
     'rounded-sm',
-    'bg-gray-600',
+    'bg-neutral-600',
     'p-2',
     'pb-[30px]',
   ],
@@ -49,22 +49,22 @@ export const QuickAddInput = twc(
     'leading-[1.43]',
     'transition-colors',
     'placeholder:font-bold',
-    'placeholder:text-gray-200',
+    'placeholder:text-neutral-200',
   ],
   {
     variants: {
       focused: {
         true: [
           'mb-0',
-          'border-purple-500',
-          'bg-white',
-          'text-gray-50',
+          'border-brand-500',
+          'bg-surface',
+          'text-neutral-50',
           'focus:outline-none',
         ],
         false: [
           'mb-[3px]',
-          'bg-black/[0.06]',
-          'hover:bg-black/10',
+          'bg-well',
+          'hover:bg-well-hover',
         ],
       },
     },
@@ -80,7 +80,7 @@ export const QuickAddTip = twc(
     'text-center',
     'text-[12px]',
     'leading-[1.33]',
-    'text-gray-200',
+    'text-neutral-200',
   ],
 );
 
@@ -111,11 +111,16 @@ export const EmptyStateIcon = twc(
     'mb-3',
     'flex',
     'justify-center',
-    'text-gray-300',
+    'text-neutral-300',
   ],
 );
 
 export const SortableList = twc(
   'div',
-  ['sortable-tasks'],
+  [
+    'flex',
+    'flex-col',
+    'gap-0.5',
+    'sortable-tasks',
+  ],
 );

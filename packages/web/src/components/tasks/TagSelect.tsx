@@ -27,7 +27,7 @@ const EmptyMessage = twc(
   'span',
   [
     'px-1',
-    'text-gray-200',
+    'text-neutral-200',
   ],
 );
 
@@ -35,7 +35,7 @@ const PanelHeader = twc(
   Row,
   [
     'min-h-12',
-    'bg-gray-700',
+    'bg-neutral-700',
     'px-3',
     'py-2',
   ],

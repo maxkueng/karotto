@@ -62,11 +62,11 @@ import { twc } from '@/styles/twc';
 
 const PurpleArrowUp = twc(
   ArrowUpToLine,
-  ['text-purple-300'],
+  ['text-brand-300'],
 );
 const PurpleArrowDown = twc(
   ArrowDownToLine,
-  ['text-purple-300'],
+  ['text-brand-300'],
 );
 
 export type TaskCardProps = {
@@ -170,6 +170,7 @@ export function TaskCard(props: TaskCardProps) {
               <CheckControlStrip dimmed={dimmed()}>
                 <Button
                   layout="control-check"
+                  highlighted={dimmed()}
                   role="checkbox"
                   aria-checked={completed()}
                   aria-label={completed() ? 'Mark incomplete' : 'Mark complete'}

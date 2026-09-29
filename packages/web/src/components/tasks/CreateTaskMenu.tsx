@@ -11,7 +11,7 @@ import { twc } from '@/styles/twc';
 
 const CreateIcon = twc(
   Plus,
-  ['text-purple-500'],
+  ['text-brand-500'],
 );
 
 const TypeIconSlot = twc(
@@ -20,7 +20,7 @@ const TypeIconSlot = twc(
     'flex',
     'w-[30px]',
     'justify-center',
-    'text-gray-200',
+    'text-neutral-200',
   ],
 );
 

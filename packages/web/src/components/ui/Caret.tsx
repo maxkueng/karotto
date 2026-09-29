@@ -18,8 +18,8 @@ export const Caret = twc(
       },
       tone: {
         current: [],
-        muted: ['text-gray-200'],
-        purple: ['text-purple-600'],
+        muted: ['text-neutral-200'],
+        purple: ['text-brand-600'],
       },
       placement: {
         inline: [],

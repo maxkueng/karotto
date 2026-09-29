@@ -1,4 +1,9 @@
-import { dateFormatSchema } from '@karotto/core';
+import {
+  dateFormatSchema,
+  resolveTheme,
+  themeModes,
+  themes,
+} from '@karotto/core';
 import type {
   ApiToken,
   DateFormat,
@@ -32,6 +37,11 @@ import {
   MediumSlot,
   NarrowSlot,
   Page,
+  Swatch,
+  SwatchRow,
+  ThemeGrid,
+  ThemeModes,
+  ThemeName,
   TokenCell,
   TokenHeadCell,
   TokenHeadRow,
@@ -42,6 +52,15 @@ import {
 } from '@/pages/SettingsPage.styles';
 import { useNotifications } from '@/stores/notifications';
 import { useSession } from '@/stores/session';
+import {
+  canSwitchMode,
+  modePreference,
+  preferredMode,
+  setModePreference,
+  setThemeId,
+  themeId,
+} from '@/stores/theme';
+import type { ModePreference } from '@/stores/theme';
 
 const dayStartLabel = (hour: number) => {
   if (hour === 0) {
@@ -61,6 +80,16 @@ const hours = Array.from(
 );
 
 const dateFormats = dateFormatSchema.options;
+
+const swatchKeys = [
+  'brand-300',
+  'page',
+  'surface',
+  'red-100',
+  'yellow-100',
+  'green-100',
+  'blue-100',
+];
 
 export function SettingsPage() {
   const session = useSession();
@@ -147,6 +176,57 @@ export function SettingsPage() {
   return (
     <Page>
       <Heading level="page">Settings</Heading>
+
+      <Card>
+        <Heading level="section">Appearance</Heading>
+        <Spacer top="md">
+          <Text tone="help">Theme and colour mode are saved in this browser only.</Text>
+        </Spacer>
+        <Spacer top="md">
+          <ThemeGrid>
+            <For each={themes}>
+              {(spec) => {
+                const preview = () => resolveTheme(
+                  spec,
+                  preferredMode(),
+                ).tokens;
+                const modes = themeModes(spec);
+                return (
+                  <Button
+                    layout="theme-card"
+                    active={themeId() === spec.id}
+                    aria-pressed={themeId() === spec.id}
+                    onClick={() => setThemeId(spec.id)}
+                  >
+                    <SwatchRow>
+                      <For each={swatchKeys}>
+                        {(key) => <Swatch style={{ 'background-color': preview()[key] }} />}
+                      </For>
+                    </SwatchRow>
+                    <ThemeName>{spec.name}</ThemeName>
+                    <ThemeModes>{modes.length === 2 ? 'Light and dark' : modes[0] === 'dark' ? 'Dark only' : 'Light only'}</ThemeModes>
+                  </Button>
+                );
+              }}
+            </For>
+          </ThemeGrid>
+        </Spacer>
+        <Spacer top="md">
+          <Label for="setting-mode">Colour mode</Label>
+          <NarrowSlot>
+            <Select
+              id="setting-mode"
+              value={modePreference()}
+              disabled={!canSwitchMode()}
+              onChange={(event) => setModePreference(event.currentTarget.value as ModePreference)}
+            >
+              <option value="system">Follow system</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </Select>
+          </NarrowSlot>
+        </Spacer>
+      </Card>
 
       <Card>
         <Heading level="section">Day Start Adjustment</Heading>

@@ -14,7 +14,7 @@ const Backdrop = twc(
     'inset-0',
     'z-[1350]',
     'overflow-y-auto',
-    'bg-purple-100/90',
+    'bg-brand-100/90',
     'fade-in',
   ],
 );
@@ -26,7 +26,7 @@ const Dialog = twc(
     'my-12',
     'w-[calc(100%-24px)]',
     'rounded-md',
-    'bg-white',
+    'bg-surface',
     'shadow-modal',
   ],
 );
@@ -48,9 +48,18 @@ export function Modal(props: ModalProps) {
 
   onMount(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && props.open && props.closeOnEscape !== false) {
-        requestClose();
+      if (event.key !== 'Escape' || !props.open || props.closeOnEscape === false) {
+        return;
       }
+      // Microtasks run between listeners of a native event; a macrotask lets an open popover claim the key first.
+      setTimeout(
+        () => {
+          if (!event.defaultPrevented) {
+            requestClose();
+          }
+        },
+        0,
+      );
     };
     document.addEventListener(
       'keydown',

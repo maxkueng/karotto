@@ -8,5 +8,6 @@ export * from '@karotto/core/schemas/events';
 export * from '@karotto/core/schemas/tag';
 export * from '@karotto/core/schemas/task';
 export * from '@karotto/core/schemas/user';
+export * from '@karotto/core/theme/themes';
 export * from '@karotto/core/scoring';
 export * from '@karotto/core/time';
