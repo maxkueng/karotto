@@ -2,6 +2,7 @@
   "name": "karotto",
   "version": "0.1.0",
   "private": true,
+  "license": "GPL-3.0-only",
   "description": "Habit, daily and to-do tracker without the game",
   "workspaces": [
     "packages/*"

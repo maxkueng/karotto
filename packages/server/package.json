@@ -4,6 +4,7 @@
   "description": "karotto API server",
   "type": "module",
   "private": true,
+  "license": "GPL-3.0-only",
   "main": "dist/main.js",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/main.ts",

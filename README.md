@@ -1,12 +1,20 @@
 # karotto
 
-Habitica's task UX without the game. Habits, dailies and to-dos with the same
-value/colour mechanics, streaks, counters, schedules, checklists, tags and day
-rollover, but no HP, XP, gold, items, avatars or popups.
+A self-hosted habit tracker and to-do list for people who want the mechanics
+of [Habitica](https://habitica.com) without the role-playing game. Habits,
+dailies and to-dos; each task carries a value that drifts up when you do it
+and down when you don't, and its colour shows where it stands. Streaks,
+counters, repeat schedules, checklists, tags, reminders and a day rollover at
+the hour you choose. No HP, XP, gold, items, avatars or popups.
+
+Web app, native Android app, command-line client, MCP server for AI agents,
+and a Home Assistant integration, all talking to one small API you run
+yourself.
 
 See `docs/DESIGN.md` for what was kept, what was dropped and where karotto
 deliberately deviates from Habitica. `docs/habitica-analysis/` holds the source
-analysis the implementation was derived from.
+analysis the implementation was derived from. Credits and licences for
+everything borrowed are in `THIRD_PARTY_NOTICES.md`.
 
 ## Layout
 
@@ -147,8 +155,9 @@ the container it is `node packages/server/dist/cli.js <args>`.
 
 ## Production
 
-One Debian/Ubuntu box, Postgres alongside, the app as a systemd service and
-Tailscale (or any TLS-terminating proxy) in front:
+One Debian/Ubuntu box, Postgres alongside, the app as a systemd service
+listening on localhost. How you reach it (Tailscale, a reverse proxy, plain
+HTTP on a LAN) is a separate choice:
 
 ```sh
 git clone <this repo> ~/karotto
@@ -157,7 +166,7 @@ sudo karotto-admin user create max --timezone Europe/Zurich
 ```
 
 Re-run the installer after `git pull` to update. Full walkthrough, including
-the DigitalOcean and Tailscale steps, backups and configuration:
+requirements, access options, backups and configuration:
 [docs/DEPLOY.md](docs/DEPLOY.md).
 
 A `Dockerfile` (API plus static web app in one image) and a
@@ -171,3 +180,30 @@ docker run -e DATABASE_URL=postgres://... -p 3210:3000 karotto
 Migrations run on boot (`AUTO_MIGRATE=true`). Set `TRUST_PROXY=true` behind a
 reverse proxy and leave `SECURE_COOKIES` at its production default (on) so the
 session cookie is only sent over HTTPS.
+
+
+## Credits
+
+karotto is a de-gamified reimplementation of [Habitica](https://habitica.com)
+by HabitRPG, Inc. The task model, scoring formulas, day rollover, schedules,
+value colours, the optional "Classic" palette and the overall task UX are
+Habitica's, reimplemented in new code after a close reading of their GPL-3.0
+source. None of Habitica's artwork is used and karotto is not affiliated with
+HabitRPG. The colour themes come from Tokyo Night, Synthwave '84 and
+synthwave-hass, Catppuccin, Nord, Gruvbox and Solarized. Full attributions
+and licences: `THIRD_PARTY_NOTICES.md`.
+
+## Vibe coded
+
+This repository was written entirely by an AI coding agent (Claude, via
+Claude Code) directing itself from conversational instructions. The human
+involvement was deciding what to build, testing it, reporting bugs and giving
+feedback on look and feel, and never typing code. Read it with that in mind:
+it is tested and it works, but no line of it has been through a human code
+review.
+
+## License
+
+GNU General Public License v3.0, see `LICENSE`. karotto inherits the licence
+from Habitica, whose mechanics it reimplements. Use it, change it, host it,
+share it; keep the source open when you do.

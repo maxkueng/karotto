@@ -1,19 +1,36 @@
 # Deploying karotto
 
-One small VM, Postgres on the same box, the app as a systemd service, and
-Tailscale for access so nothing but SSH is exposed to the internet. The whole
-thing is `deploy/install.sh`; everything below explains what it does and the
-few manual steps around it.
+One Linux box, Postgres on the same machine, the app as a systemd service.
+The whole thing is `deploy/install.sh`; everything below explains what it
+does and the few manual steps around it. The app listens on localhost only;
+how you reach it from your devices is a separate decision, covered under
+[Access](#4-access).
 
-## 1. The server
+## 1. Install
 
-Any Debian or Ubuntu host works. On DigitalOcean: Create → Droplets →
-Ubuntu 24.04 LTS, the smallest Regular plan (1 vCPU, 1 GB) is plenty, SSH
-key authentication, and enable the weekly droplet backups if you like belt
-and braces. Note the IP; you only ever need it for SSH.
+Requirements:
+
+- Debian 12 or newer, or Ubuntu 22.04 or newer, on x86-64 or arm64. The
+  installer uses `apt`, NodeSource and systemd; other distributions need the
+  same steps done by hand.
+- Root access for the installer. The service itself runs as an unprivileged
+  `karotto` user.
+- Memory: the running app uses well under 200 MB, plus Postgres. Building the
+  web app peaks around 800 MB, so a machine with less than 2 GB of RAM needs
+  swap; the installer adds a 2 GB swap file on such machines automatically.
+- Disk: about 1.5 GB for Node, the checkout with dependencies and Postgres,
+  plus backups. The database itself stays in the low megabytes for one user.
+- CPU: anything. One core builds the web app in a few minutes and the app
+  idles at zero afterwards.
+- Network: nothing inbound is required. Tailscale brings the app onto your
+  tailnet over an outbound connection. Without Tailscale, ports 80 and 443
+  for a reverse proxy.
+
+A cheap cloud VM, a Raspberry Pi 4 or 5, or any always-on machine you already
+have all qualify. Note the address; you only ever need it for SSH.
 
 ```sh
-git clone https://github.com/<you>/karotto.git ~/karotto
+git clone https://github.com/maxkueng/karotto.git ~/karotto
 sudo ~/karotto/deploy/install.sh
 ```
 
@@ -36,19 +53,63 @@ The installer is idempotent. It:
   `/usr/local/bin`;
 - applies migrations and starts the service.
 
-Then create your account:
+Then create your account and check the service answers:
 
 ```sh
 sudo karotto-admin user create max --timezone Europe/Zurich
+curl http://127.0.0.1:3210/api/v1/health
 sudo journalctl -u karotto -f
 ```
 
-## 2. Tailscale
+That is the whole installation. The app is now running on
+`http://127.0.0.1:3210` and nothing else on the machine has changed.
 
-The app listens on `127.0.0.1:3210` only. Tailscale puts it on your tailnet
-with a real HTTPS certificate and no open ports. Two ways, pick one.
+## 2. Day to day
 
-### As a Tailscale Service (own name, own port 443)
+| Task | Command |
+|---|---|
+| Update to the latest version | `cd ~/karotto && git pull && sudo deploy/install.sh` |
+| Logs | `journalctl -u karotto -f` |
+| Restart | `systemctl restart karotto` |
+| Create a user / API token | `karotto-admin user create <name>`, `karotto-admin token create <name> --name scripts` |
+| Change a password | `karotto-admin user password <name>` |
+| Manual backup | `systemctl start karotto-backup` |
+| Restore a backup | `zcat /var/backups/karotto/karotto-<stamp>.sql.gz \| sudo -u postgres psql karotto` |
+
+Backups land in `/var/backups/karotto` nightly at 03:30, last 30 kept. Copy
+them off the box now and then; a disk or VM snapshot is not a consistent
+database snapshot, the SQL dump is.
+
+## 3. Configuration
+
+`/etc/karotto/env`:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DATABASE_URL` | set by installer | Postgres connection string |
+| `HOST`, `PORT` | `127.0.0.1`, `3210` | Bind address |
+| `STATIC_DIR` | `/opt/karotto/src/packages/web/dist` | Built web app served by the API process |
+| `TRUST_PROXY` | `true` | Trust `X-Forwarded-*` from Tailscale or the reverse proxy |
+| `SECURE_COOKIES` | on in production | Session cookie `Secure` flag; only turn off for plain HTTP on a LAN |
+| `SESSION_TTL_DAYS` | `365` | Web session lifetime |
+| `AUTO_MIGRATE` | `true` | Apply migrations on start |
+| `LOG_LEVEL` | `info` | pino level |
+
+Edit, then `systemctl restart karotto`.
+
+## 4. Access
+
+The app binds to `127.0.0.1:3210` and speaks plain HTTP. It does not
+terminate TLS and it is not meant to face the internet directly. Pick one of
+the following, or anything else that can proxy to a local port.
+
+### Tailscale
+
+Tailscale puts the app on your tailnet with a real HTTPS certificate and no
+open ports, from every device that has the Tailscale client, phone included.
+Two ways.
+
+#### As a Tailscale Service (own name, own port 443)
 
 A Service gets its own tailnet address, so the app lives at
 `https://karotto.<tailnet>.ts.net` and other services on the same machine
@@ -86,7 +147,7 @@ can also use port 443. One-time setup in the Tailscale admin console:
 `tailscale serve status` confirms the mapping; it survives reboots. Requires
 Tailscale 1.86 or newer on the host.
 
-### With plain `tailscale serve` (no admin work)
+#### With plain `tailscale serve` (no admin work)
 
 ```sh
 curl -fsSL https://tailscale.com/install.sh | sh
@@ -99,15 +160,15 @@ claims the machine's tailnet port 443; a second app needs another port
 (`https:8443`). Certificates need MagicDNS and HTTPS enabled once for the
 tailnet, which the command tells you about if they are not.
 
-Either way the URL works from every device on the tailnet, phone included.
-Use it on the Android login screen and in the browser. `TRUST_PROXY=true` in
-`/etc/karotto/env` makes the app read the client address from the
-`X-Forwarded-For` header Tailscale sets, and `NODE_ENV=production` keeps the
-session cookie HTTPS-only, which is right because the browser talks HTTPS to
-Tailscale.
+Either way the URL works from every device on the tailnet. `TRUST_PROXY=true`
+in `/etc/karotto/env` makes the app read the client address from the
+`X-Forwarded-For` header Tailscale sets, and the session cookie stays
+HTTPS-only, which is right because the browser talks HTTPS to Tailscale.
 
-If you ever want the app reachable without Tailscale, put Caddy in front
-instead and open ports 80 and 443; it fetches its own certificates:
+### A reverse proxy with TLS
+
+For a public hostname, put Caddy (or nginx, Traefik, ...) in front and open
+ports 80 and 443. Caddy fetches its own certificates:
 
 ```sh
 apt install caddy
@@ -119,47 +180,28 @@ CADDY
 systemctl reload caddy
 ```
 
-Plain HTTP on a LAN also works for testing: set `SECURE_COOKIES=false` or the
-browser will drop the session cookie.
+Keep `TRUST_PROXY=true` so rate limiting and logs see real client addresses.
 
-## 3. Day to day
+### Plain HTTP on the LAN
 
-| Task | Command |
-|---|---|
-| Update to the latest version | `cd ~/karotto && git pull && sudo deploy/install.sh` |
-| Logs | `journalctl -u karotto -f` |
-| Restart | `systemctl restart karotto` |
-| Create a user / API token | `karotto-admin user create <name>`, `karotto-admin token create <name> --name scripts` |
-| Change a password | `karotto-admin user password <name>` |
-| Manual backup | `systemctl start karotto-backup` |
-| Restore a backup | `zcat /var/backups/karotto/karotto-<stamp>.sql.gz \| sudo -u postgres psql karotto` |
+For testing, or a network you trust, set `HOST=0.0.0.0` and
+`SECURE_COOKIES=false` in `/etc/karotto/env` and use
+`http://<machine>:3210`. Without the second setting the browser drops the
+session cookie over HTTP. Do not do this on a network you do not control.
 
-Backups land in `/var/backups/karotto` nightly at 03:30, last 30 kept. Copy
-them off the box now and then; DigitalOcean's droplet backups cover the
-disk, not a consistent database snapshot.
+## 5. Clients
 
-## 4. Configuration
+Every client takes the URL you chose above.
 
-`/etc/karotto/env`:
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `DATABASE_URL` | set by installer | Postgres connection string |
-| `HOST`, `PORT` | `127.0.0.1`, `3210` | Bind address |
-| `STATIC_DIR` | `/opt/karotto/src/packages/web/dist` | Built web app served by the API process |
-| `TRUST_PROXY` | `true` | Trust `X-Forwarded-*` from Tailscale or the reverse proxy |
-| `SECURE_COOKIES` | on in production | Session cookie `Secure` flag; only turn off for plain HTTP on a LAN |
-| `SESSION_TTL_DAYS` | `365` | Web session lifetime |
-| `AUTO_MIGRATE` | `true` | Apply migrations on start |
-| `LOG_LEVEL` | `info` | pino level |
-
-Edit, then `systemctl restart karotto`.
-
-## 5. Phone
-
-Install Tailscale on the phone, join the same tailnet, and point the Android
-app at the same `https://….ts.net` URL. It creates its own
-long-lived token on login and never stores the password.
+- **Browser:** open the URL and log in.
+- **Android app:** enter the URL on the login screen. It creates its own
+  long-lived token on login and never stores the password. With Tailscale,
+  install the Tailscale app on the phone and join the same tailnet.
+- **CLI:** `karotto login --url <url> -u <username>` on any machine with the
+  client, including the server itself, where the installer put it.
+- **Home Assistant:** add the Karotto integration with the URL and your
+  credentials. See `docs/HOME_ASSISTANT.md`; on Home Assistant OS with
+  Tailscale the Supervisor DNS needs to resolve `*.ts.net` names.
 
 ## Docker instead
 

@@ -4,6 +4,7 @@
   "description": "Shared schemas and domain logic for karotto",
   "type": "module",
   "private": true,
+  "license": "GPL-3.0-only",
   "exports": {
     ".": "./src/index.ts",
     "./*": "./src/*.ts"

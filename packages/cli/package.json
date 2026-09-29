@@ -4,6 +4,7 @@
   "description": "karotto: command-line client for the karotto API",
   "type": "module",
   "private": true,
+  "license": "GPL-3.0-only",
   "bin": {
     "karotto": "dist/main.js"
   },

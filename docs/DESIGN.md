@@ -15,10 +15,13 @@ Kept from Habitica:
   Nth-weekday every X months, every X years, with a start date.
 - Checklists, tags with AND filtering, search, per-column filters
   (All/Weak/Strong, All/Due/Not Due, Active/Scheduled/Complete), drag ordering,
-  quick-add with multi-line input, task aliases for the API.
+  quick-add with multi-line input, task aliases for the API. Filters are
+  per client (browser storage, Android DataStore), not synced: a wall
+  dashboard and a phone should not fight over them.
 - Custom day start, the "Welcome back" (yesterdailies) modal, day rollover
   (cron) with the same value math.
-- Reminders stored on tasks (no delivery; a future mobile app consumes them).
+- Reminders stored on tasks. The Android app delivers them as exact alarms;
+  the web app does not deliver.
 
 Dropped: HP, XP, MP, gold, levels, classes, attributes, items, drops, pets,
 mounts, avatar, quests, party, guilds, challenges, group tasks, shops, rewards
@@ -38,8 +41,13 @@ one column and one select.
 | Database | PostgreSQL 17 (PGlite in tests) |
 | Web | `@karotto/web`, Vite + SolidJS + Tailwind 4 with the `twc` helper |
 | Icons | lucide-solid |
+| Android | `packages/android`, Kotlin + Jetpack Compose, Room cache, OkHttp, standalone Gradle project |
+| CLI / MCP | `@karotto/cli`, yargs; `karotto mcp` serves the same operations over the Model Context Protocol |
+| Home Assistant | `custom_components/karotto`, Python, config flow, todo + sensor platforms |
+| Themes | `core/src/theme`: OKLCH palette engine; generates CSS variables for the web and Kotlin palettes for Android |
 | Auth | argon2id passwords, DB-backed session cookie, hashed named API tokens |
-| Deploy | single image: Fastify serves `/api` and the built web app |
+| Live updates | Server-Sent Events from an in-process hub; every mutation publishes to the user's streams |
+| Deploy | `deploy/install.sh`: systemd service, local Postgres, nightly backup timer; a `Dockerfile` is the alternative |
 
 The scoring, schedule and rollover math live in `core` so the browser computes
 exactly what the server will persist (optimistic UI without drift).
@@ -153,14 +161,15 @@ Postgres, UUID primary keys, `timestamptz` for instants, `date` for calendar
 dates. Tables:
 
 - `users`: username, password hash, preferences (`day_start`, `timezone`,
-  `date_format`, `active_filter`, `completed_todo_retention_days`), `last_cron`,
-  `cron_lock_at`
+  `date_format`, `completed_todo_retention_days`), `last_cron`. Filter state
+  is not stored server-side.
 - `sessions`: hashed token, user, expiry, last seen
 - `api_tokens`: hashed token, prefix for display, name, last used, optional expiry
-- `tags`: name, position
+- `tags`: name, position; unique per user, case-insensitively
+  (`409 tag_exists`)
 - `tasks`: single table with a `type` column and nullable per-type columns;
   `checklist` and `reminders` as jsonb arrays; `position` integer per user and
-  type
+  type; `alias` unique per user
 - `task_tags`: join table, cascades on tag delete
 - `task_history`: one row per entry; habits get one row per CDS day updated in
   place, dailies one row per check and per rollover
@@ -171,15 +180,22 @@ Completed to-dos are not part of the order.
 
 ## API
 
-All under `/api/v1`, JSON, zod-validated, OpenAPI at `/api/v1/openapi.json`.
-Auth is either the session cookie or `Authorization: Bearer krt_...`.
+All under `/api/v1`, JSON, zod-validated. OpenAPI at `/api/v1/openapi.json`,
+Swagger UI at `/api/v1/docs`, both generated from the zod schemas with the
+route summaries. Auth is either the session cookie or
+`Authorization: Bearer krt_...`.
 
 Errors: `{ error: { code, message, details? } }` with the HTTP status. Codes are
-stable strings (`validation`, `not_found`, `unauthorized`, `conflict`, ...).
+stable strings (`validation`, `not_found`, `unauthorized`, `already_completed`,
+`not_completed`, `tag_exists`, `cron_running`, ...). Empty request bodies are
+accepted under any content type so automation tools that POST without a
+payload work.
 
 Endpoints (see `packages/server/src/routes/`):
 
-- auth: `POST /auth/login`, `POST /auth/logout`, `GET /auth/session`
+- auth: `POST /auth/login` (session cookie), `POST /auth/token` (exchange
+  credentials for a named long-lived token; used by the Android app, the CLI
+  and the Home Assistant integration), `POST /auth/logout`, `GET /auth/session`
 - user: `GET /user`, `PATCH /user/preferences`, `PUT /user/password`
 - tokens: `GET /user/tokens`, `POST /user/tokens`, `DELETE /user/tokens/:id`
 - tasks: `GET /tasks?type=`, `POST /tasks`, `GET|PATCH|DELETE /tasks/:id`,
@@ -191,9 +207,62 @@ Endpoints (see `packages/server/src/routes/`):
   `GET /tasks/:id/history`
 - tags: `GET|POST /tags`, `PATCH|DELETE /tags/:id`, `PUT /tags/order`
 - cron: `GET /cron/status`, `POST /cron`
+- events: `GET /events` (Server-Sent Events, see below)
 
 `:id` accepts a task UUID or its alias. Reads never write (Habitica's task list
 endpoint repairs and persists order on GET).
+
+## Live updates
+
+Every mutating route publishes a change event to an in-process `EventHub`
+keyed by user: `task.upserted`, `task.deleted`, `tasks.reordered`,
+`tasks.invalidated` (after a rollover), `tags.changed`, `user.updated`.
+`GET /events` streams them as SSE with a `: ping` comment every 25 seconds.
+A client sends an `X-Client-Id` header on its requests and the same value is
+echoed as `origin` on each event, so it can skip changes it caused itself.
+The hub is in-process, so one server instance; there is no fan-out bus.
+
+Consumers: the web app subscribes while the tab is open, the Android app while
+in the foreground, the Home Assistant integration always, with backoff
+reconnects and a full refetch after each reconnect.
+
+## Themes
+
+Habitica's palette is not karotto's identity. The default theme is Carrot;
+Habitica's colours ship as the optional "Classic" theme. Tokyo Night,
+Synthwave '84, Catppuccin, Nord, Gruvbox and Solarized are the others.
+
+A theme is a `ThemeSpec` in `core/src/theme/themes.ts` with a light and/or
+dark `ThemeVariant`: ink, page, surface, brand and seven hue anchors.
+`buildTokens` derives the full token set from those anchors in OKLCH: brand
+and neutral ramps, per-hue ramps for the task value bands, tints, and the
+surface/well/popover/nav roles. Contrast decisions live in the engine, not in
+each theme, so a new theme is a dozen colours.
+
+Generated outputs are committed: `packages/web/src/theme.generated.css`
+(Tailwind variables, `npm run theme:css -w @karotto/web`) and
+`GeneratedThemes.kt` for Android (`npm run themes:android -w @karotto/core`).
+The web app switches themes at runtime by setting the CSS variables; theme and
+colour mode are per client (browser storage, Android settings), like filters.
+
+## Clients
+
+- **Web** (`packages/web`): the primary UI, three columns, per-client filters,
+  undo snackbar after completing a task, themes.
+- **Android** (`packages/android`): a native client modelled on Habitica's
+  Android app. Logs in with `POST /auth/token`, caches tasks in Room, queues
+  scores while offline (`pending_scores`), computes due-ness locally with the
+  same schedule rules, delivers reminders as exact alarms, reorders by drag.
+- **CLI** (`packages/cli`, binary `karotto`): tasks, scoring, tags, cron and
+  raw API calls with `--json` output for scripts; task references by alias,
+  id or unique id prefix. `karotto mcp` exposes the same operations as MCP
+  tools. `skills/karotto/SKILL.md` teaches agents the CLI.
+- **Home Assistant** (`custom_components/karotto`): to-do list entities for
+  to-dos and today's dailies, count sensors, a rollover-pending binary sensor,
+  and `karotto.score` / `run_rollover` / `add_task` actions. Live over SSE.
+  See `docs/HOME_ASSISTANT.md`.
+- **Server admin** (`karotto-admin`): users, tokens, migrations; runs on the
+  server with database access, never over the API.
 
 ## Users
 
@@ -203,8 +272,10 @@ first class in the schema; every query is scoped by `user_id`.
 
 ## Not in v1
 
-- Webhooks (schema documented in the analysis; add when needed)
-- Reminder delivery and push devices
+- Outbound webhooks (the SSE stream covers live consumers; schema for
+  webhooks is documented in the analysis, add when needed)
+- Reminder delivery on the web (Android delivers them; there is no push
+  service)
 - Task history charts (the Habitica web client shows none either)
 - Data export
 
@@ -222,6 +293,8 @@ first class in the schema; every query is scoped by `user_id`.
   `Checkbox`, `Radio`, `Modal`, `Menu`, `Tooltip`, `DatePicker`, `ToggleGroup`.
   Feature components compose these; component-specific layout pieces sit in a
   sibling `*.styles.ts` file.
-- Global CSS (`index.css`) holds only the theme tokens, `@layer base` resets
-  and `@layer components` rules for markdown output and drag ghosts, so that
-  Tailwind utilities always win.
+- Global CSS (`index.css`) holds only fonts, shadows, `@layer base` resets and
+  `@layer components` rules for markdown output and drag ghosts, so that
+  Tailwind utilities always win. Colour tokens come from the generated
+  `theme.generated.css`; never hand-edit it, change `core/src/theme` and
+  regenerate.
