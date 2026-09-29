@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.karotto.app.domain.Checklisted
@@ -342,8 +343,13 @@ private fun ChecklistRows(task: Checklisted, onToggle: (String) -> Unit) {
                 ) {
                     MarkdownText(
                         source = item.text,
-                        style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, letterSpacing = 0.28.sp, lineHeight = 20.sp),
-                        color = if (item.completed) colors.textDimmed else colors.textSecondary,
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = 14.sp,
+                            letterSpacing = 0.28.sp,
+                            lineHeight = 20.sp,
+                            textDecoration = if (item.completed) TextDecoration.LineThrough else null,
+                        ),
+                        color = if (item.completed) colors.textQuad else colors.textSecondary,
                     )
                 }
             }

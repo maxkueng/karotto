@@ -11,6 +11,40 @@ Web app, native Android app, command-line client, MCP server for AI agents,
 and a Home Assistant integration, all talking to one small API you run
 yourself.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web-tasks-tokyo-night-dark.png" alt="Web task board, Tokyo Night" width="420"></td>
+    <td align="center"><img src="docs/screenshots/web-tasks-synthwave.png" alt="Web task board, Synthwave '84" width="420"></td>
+  </tr>
+  <tr>
+    <td align="center">Web, Tokyo Night</td>
+    <td align="center">Web, Synthwave '84</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web-task-editor-tokyo-night-dark.png" alt="Web task editor, Tokyo Night" width="420"></td>
+    <td align="center"><img src="docs/screenshots/web-settings-synthwave.png" alt="Web settings with theme picker, Synthwave '84" width="420"></td>
+  </tr>
+  <tr>
+    <td align="center">Task editor</td>
+    <td align="center">Settings and themes</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/android-habits-tokyo-night.png" alt="Android habits, Tokyo Night" width="270"></td>
+    <td align="center"><img src="docs/screenshots/android-dailies-synthwave.png" alt="Android dailies, Synthwave '84" width="270"></td>
+    <td align="center"><img src="docs/screenshots/android-task-editor-tokyo-night.png" alt="Android task editor, Tokyo Night" width="270"></td>
+  </tr>
+  <tr>
+    <td align="center">Android, habits</td>
+    <td align="center">Android, dailies</td>
+    <td align="center">Android, task editor</td>
+  </tr>
+</table>
+
 See `docs/DESIGN.md` for what was kept, what was dropped and where karotto
 deliberately deviates from Habitica. `docs/habitica-analysis/` holds the source
 analysis the implementation was derived from. Credits and licences for

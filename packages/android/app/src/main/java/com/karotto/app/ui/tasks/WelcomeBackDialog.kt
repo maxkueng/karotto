@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -149,7 +150,12 @@ private fun YesterdailyRow(daily: Daily, checked: Boolean, onToggle: () -> Unit,
                     TaskCheckbox(round = false, fill = colors.checkboxFill, checked = item.completed, checkTint = ramp.dark, size = 20.dp)
                 }
                 Box(Modifier.weight(1f).padding(horizontal = 15.dp, vertical = 5.dp).fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
-                    Text(item.text, fontSize = 14.sp, color = if (item.completed) colors.textDimmed else colors.textSecondary)
+                    Text(
+                        item.text,
+                        fontSize = 14.sp,
+                        color = if (item.completed) colors.textQuad else colors.textSecondary,
+                        textDecoration = if (item.completed) TextDecoration.LineThrough else null,
+                    )
                 }
             }
         }
