@@ -137,14 +137,22 @@ test(
       'first step',
     );
     await page.keyboard.press('Enter');
+    const firstItem = page.locator('[aria-label="Checklist item"]').first();
+    await firstItem.click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' done');
+    await expect(firstItem).toHaveValue('first step done');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('[aria-label="Checklist item"]').nth(1)).toBeFocused();
+    await page.keyboard.type('second step');
     await page.click('[role=dialog] button:has-text("Save")');
     await expect(todoCard).toContainText('notes');
-    await expect(todoCard).toContainText('0/1');
+    await expect(todoCard).toContainText('0/2');
     await todoCard.locator(
       'label',
-      { hasText: 'first step' },
+      { hasText: 'first step done' },
     ).click();
-    await expect(todoCard).toContainText('1/1');
+    await expect(todoCard).toContainText('1/2');
 
     await todoCard.locator('[role=checkbox]').first().click();
     await expect(todoCard).toHaveCount(0);

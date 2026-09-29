@@ -3,8 +3,10 @@ import GripVertical from 'lucide-solid/icons/grip-vertical';
 import Plus from 'lucide-solid/icons/plus';
 import Trash from 'lucide-solid/icons/trash';
 import {
+  createEffect,
   createSignal,
-  For,
+  Index,
+  on,
   Show,
 } from 'solid-js';
 import { Button } from '@/components/ui/Button';
@@ -121,12 +123,33 @@ type ChecklistEditorProps = {
   onPendingChange: (text: string) => void;
 };
 
+type FocusTarget = number | 'pending' | null;
+
 export function ChecklistEditor(props: ChecklistEditorProps) {
   const [
     open,
     setOpen,
   ] = createSignal(true);
+  const [
+    focusAt,
+    setFocusAt,
+  ] = createSignal<FocusTarget>(null);
   let list: HTMLDivElement | undefined;
+  let pendingInput: HTMLInputElement | undefined;
+
+  createEffect(on(
+    focusAt,
+    (target) => {
+      if (target === null) {
+        return;
+      }
+      const input = target === 'pending'
+        ? pendingInput
+        : list?.querySelectorAll<HTMLInputElement>('input[aria-label="Checklist item"]')[target];
+      input?.focus();
+      setFocusAt(null);
+    },
+  ));
 
   const update = (
     id: string,
@@ -141,6 +164,42 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
   };
 
   const remove = (id: string) => props.onChange(props.items.filter((item) => item.id !== id));
+
+  const insertAfter = (index: number) => {
+    const next = [...props.items];
+    next.splice(
+      index + 1,
+      0,
+      {
+        id: newId(),
+        text: '',
+        completed: false,
+      },
+    );
+    props.onChange(next);
+    setFocusAt(index + 1);
+  };
+
+  const removeAt = (index: number) => {
+    props.onChange(props.items.filter((
+      _,
+      position,
+    ) => position !== index));
+    setFocusAt(index === 0 ? 'pending' : index - 1);
+  };
+
+  const onItemKeyDown = (
+    event: KeyboardEvent & { currentTarget: HTMLInputElement },
+    index: number,
+  ) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      insertAfter(index);
+    } else if (event.key === 'Backspace' && event.currentTarget.value === '') {
+      event.preventDefault();
+      removeAt(index);
+    }
+  };
 
   const addPending = () => {
     const text = props.pendingText.trim();
@@ -194,30 +253,34 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
             list = element;
           }}
           >
-            <For each={props.items}>
+            <Index each={props.items}>
               {(
                 item,
                 index,
               ) => (
-                <ItemRow first={index() === 0}>
+                <ItemRow first={index === 0}>
                   <GripHandle>
                     <GripVertical size={16} />
                   </GripHandle>
                   <CheckboxSlot>
                     <Checkbox
-                      checked={item.completed}
+                      checked={item().completed}
                       onChange={(checked) => update(
-                        item.id,
+                        item().id,
                         { completed: checked },
                       )}
                     />
                   </CheckboxSlot>
                   <ItemInput
-                    value={item.text}
+                    value={item().text}
                     aria-label="Checklist item"
                     onInput={(event) => update(
-                      item.id,
+                      item().id,
                       { text: event.currentTarget.value },
+                    )}
+                    onKeyDown={(event) => onItemKeyDown(
+                      event,
+                      index,
                     )}
                   />
                   <RevealOnRowHover>
@@ -225,12 +288,12 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
                       layout="icon-danger"
                       aria-label="Remove checklist item"
                       icon={<Trash size={14} />}
-                      onClick={() => remove(item.id)}
+                      onClick={() => remove(item().id)}
                     />
                   </RevealOnRowHover>
                 </ItemRow>
               )}
-            </For>
+            </Index>
           </div>
           <NewItemRow topBorder={props.items.length === 0}>
             <PlusIcon
@@ -238,6 +301,9 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
               stroke-width={3}
             />
             <ItemInput
+              ref={(element: HTMLInputElement) => {
+                pendingInput = element;
+              }}
               placeholder="New checklist item"
               value={props.pendingText}
               onInput={(event) => props.onPendingChange(event.currentTarget.value)}

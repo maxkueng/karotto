@@ -258,12 +258,13 @@ function TaskModalBody(props: BodyProps) {
   const canSave = () => draft.text.trim() !== '' && !saving();
 
   const checklistWithPending = () => {
+    const items = draft.checklist.filter((item) => item.text.trim() !== '');
     const pending = pendingChecklist().trim();
     if (pending === '') {
-      return draft.checklist;
+      return items;
     }
     return [
-      ...draft.checklist,
+      ...items,
       {
         id: newId(),
         text: pending,

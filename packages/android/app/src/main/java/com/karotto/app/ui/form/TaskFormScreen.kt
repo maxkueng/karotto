@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -65,12 +66,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -464,14 +468,24 @@ private fun FieldCard(label: String, palette: FormPalette, modifier: Modifier = 
 
 @Composable
 private fun ChecklistEditor(state: FormState, palette: FormPalette, viewModel: TaskFormViewModel) {
+    val focusManager = LocalFocusManager.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         state.checklist.forEachIndexed { index, item ->
             val isAddRow = index == state.checklist.lastIndex
+            val blankAddRow = isAddRow && item.text.isEmpty()
             FormRow(palette, filled = !isAddRow, onRemove = if (isAddRow) null else ({ viewModel.removeChecklistItem(item.key) })) {
                 BasicTextField(
                     value = item.text,
                     onValueChange = { viewModel.setChecklistText(item.key, it) },
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = if (blankAddRow) ImeAction.Done else ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                        onDone = { focusManager.clearFocus() },
+                    ),
                     textStyle = TextStyle(fontSize = 14.sp, color = KarottoTheme.colors.textPrimary),
                     cursorBrush = SolidColor(palette.uiSub),
                     modifier = Modifier.weight(1f),
