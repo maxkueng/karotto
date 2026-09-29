@@ -871,6 +871,56 @@ describe(
 );
 
 describe(
+  'content types',
+  () => {
+    it(
+      'accepts body-less posts sent with a non-JSON content type',
+      async () => {
+        const login = await call(
+          'POST',
+          '/auth/token',
+          {
+            username: 'max',
+            password: 'correct horse battery',
+            name: 'automation test',
+          },
+        );
+        const bearer = { authorization: `Bearer ${(login.body as { token: string }).token}` };
+        const created = await call(
+          'POST',
+          '/tasks',
+          {
+            type: 'habit',
+            text: 'automation',
+          },
+          bearer,
+        );
+        const id = (created.body as { id: string }).id;
+        const response = await app.inject({
+          method: 'POST',
+          url: `${API_PREFIX}/tasks/${id}/score/up`,
+          headers: {
+            ...bearer,
+            'content-type': 'application/x-www-form-urlencoded',
+          },
+        });
+        expect(response.statusCode).toBe(200);
+        const withBody = await app.inject({
+          method: 'POST',
+          url: `${API_PREFIX}/tasks/${id}/score/up`,
+          headers: {
+            ...bearer,
+            'content-type': 'application/x-www-form-urlencoded',
+          },
+          payload: 'task=shower',
+        });
+        expect(withBody.statusCode).toBe(415);
+      },
+    );
+  },
+);
+
+describe(
   'docs',
   () => {
     it(

@@ -53,6 +53,35 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  // Automation tools often POST with an empty body under a content type Fastify has no parser for.
+  app.addContentTypeParser(
+    '*',
+    { parseAs: 'string' },
+    (
+      _request,
+      body,
+      done,
+    ) => {
+      if (body === '') {
+        done(
+          null,
+          undefined,
+        );
+        return;
+      }
+      done(
+        Object.assign(
+          new Error('Unsupported Media Type'),
+          {
+            statusCode: 415,
+            code: 'unsupported_media_type',
+          },
+        ),
+        undefined,
+      );
+    },
+  );
+
   await app.register(cookie);
   await app.register(
     rateLimit,
