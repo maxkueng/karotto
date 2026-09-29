@@ -26,6 +26,8 @@ export const cronRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/cron/status',
     {
       schema: {
+        summary: 'Check whether a day rollover is pending',
+        description: 'Also lists yesterday\'s due, unfinished dailies so a client can ask which were actually done.',
         tags: ['cron'],
         response: { 200: cronStatusSchema },
       },
@@ -41,6 +43,8 @@ export const cronRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/cron',
     {
       schema: {
+        summary: 'Run the day rollover',
+        description: 'Optionally scores the listed dailies first, then resets dailies, decays missed ones, records history and advances `lastCron`. Safe to call when nothing is pending; returns `ran: false`.',
         tags: ['cron'],
         body: cronRunSchema.nullish(),
         response: { 200: cronResultSchema },

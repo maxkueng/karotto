@@ -332,10 +332,14 @@ export function SettingsPage() {
             Long-lived tokens for scripts. Send them as
             {' '}
             <CodeChip>Authorization: Bearer krt_…</CodeChip>
-            . The API is documented at
+            . Interactive documentation lives at
+            {' '}
+            <a href="/api/v1/docs">/api/v1/docs</a>
+            {' '}
+            (OpenAPI at
             {' '}
             <a href="/api/v1/openapi.json">/api/v1/openapi.json</a>
-            .
+            ).
           </Text>
         </Spacer>
         <Spacer top="md">

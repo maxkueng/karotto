@@ -118,6 +118,8 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks',
     {
       schema: {
+        summary: 'List tasks',
+        description: 'Active tasks by default. `type=completedTodos` lists completed to-dos instead. Dailies carry a server-computed `isDue` for the user\'s current day.',
         tags: ['tasks'],
         querystring: taskListQuerySchema,
         response: { 200: z.array(taskSchema) },
@@ -135,6 +137,8 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks',
     {
       schema: {
+        summary: 'Create one or more tasks',
+        description: 'Send a single task object or an array of up to 100. New tasks go to the top of their type.',
         tags: ['tasks'],
         body: z.union([
           taskCreateSchema,
@@ -179,6 +183,8 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/score',
     {
       schema: {
+        summary: 'Score several tasks at once',
+        description: 'Applied in order, each as if scored individually.',
         tags: ['tasks'],
         body: bulkScoreSchema,
         response: { 200: bulkScoreResultSchema },
@@ -203,6 +209,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/order',
     {
       schema: {
+        summary: 'Set the order of one task type',
         tags: ['tasks'],
         body: taskOrderSchema,
         response: { 200: z.object({ ids: z.array(uuidSchema) }) },
@@ -224,6 +231,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/clear-completed',
     {
       schema: {
+        summary: 'Delete all completed to-dos',
         tags: ['tasks'],
         response: { 200: z.object({ deleted: z.number().int() }) },
       },
@@ -246,6 +254,8 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id',
     {
       schema: {
+        summary: 'Get a task',
+        description: '`:id` is a task id or its alias, here and everywhere below.',
         tags: ['tasks'],
         params: idParams,
         response: { 200: taskSchema },
@@ -269,6 +279,8 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id',
     {
       schema: {
+        summary: 'Update a task',
+        description: 'Fields depend on the task\'s type; unknown or wrong-type fields are rejected with 400.',
         tags: ['tasks'],
         params: idParams,
         body: z.record(
@@ -307,6 +319,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id',
     {
       schema: {
+        summary: 'Delete a task',
         tags: ['tasks'],
         params: idParams,
         response: { 200: okSchema },
@@ -334,6 +347,8 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/score/:direction',
     {
       schema: {
+        summary: 'Score a task up or down',
+        description: 'Habits count a click; dailies and to-dos toggle completion (`up` completes, `down` un-completes). Returns the updated task and the value delta.',
         tags: ['tasks'],
         params: z.object({
           id: taskIdentifierSchema,
@@ -369,6 +384,8 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/move/:position',
     {
       schema: {
+        summary: 'Move a task to a position',
+        description: 'Position is the index among the other uncompleted tasks of the same type; -1 moves to the end.',
         tags: ['tasks'],
         params: z.object({
           id: taskIdentifierSchema,
@@ -399,6 +416,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/history',
     {
       schema: {
+        summary: 'Get a task\'s value history',
         tags: ['tasks'],
         params: idParams,
         response: { 200: z.array(historyEntrySchema) },
@@ -417,6 +435,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/checklist',
     {
       schema: {
+        summary: 'Add a checklist item',
         tags: ['checklist'],
         params: idParams,
         body: checklistItemInputSchema,
@@ -445,6 +464,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/checklist/:itemId',
     {
       schema: {
+        summary: 'Edit a checklist item',
         tags: ['checklist'],
         params: itemParams,
         body: checklistItemPatchSchema,
@@ -474,6 +494,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/checklist/:itemId/score',
     {
       schema: {
+        summary: 'Toggle a checklist item',
         tags: ['checklist'],
         params: itemParams,
         response: { 200: taskSchema },
@@ -501,6 +522,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/checklist/:itemId',
     {
       schema: {
+        summary: 'Remove a checklist item',
         tags: ['checklist'],
         params: itemParams,
         response: { 200: taskSchema },
@@ -528,6 +550,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/tags/:tagId',
     {
       schema: {
+        summary: 'Attach a tag to a task',
         tags: ['tasks'],
         params: tagParams,
         response: { 200: taskSchema },
@@ -555,6 +578,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tasks/:id/tags/:tagId',
     {
       schema: {
+        summary: 'Detach a tag from a task',
         tags: ['tasks'],
         params: tagParams,
         response: { 200: taskSchema },

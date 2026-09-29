@@ -72,7 +72,9 @@ Server URL on the login screen:
 
 ## API
 
-Everything is under `/api/v1`, described by `/api/v1/openapi.json`. Create a
+Everything is under `/api/v1`. Interactive docs are served at `/api/v1/docs`
+(Swagger UI generated from the zod schemas), the raw spec at
+`/api/v1/openapi.json`. Create a
 long-lived token in Settings or with the CLI and send it as a bearer token:
 
 ```sh

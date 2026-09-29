@@ -34,7 +34,8 @@ export const eventRoutes: FastifyPluginAsyncZod<AppContext> = async (
     {
       schema: {
         tags: ['events'],
-        description: 'Server-sent events stream of changes to the current user\'s data',
+        summary: 'Stream live changes',
+        description: 'Server-sent events. Each event\'s `event:` field is one of `task.upserted`, `task.deleted`, `tasks.reordered`, `tasks.invalidated`, `tags.changed`, `user.updated`; `data:` is the JSON payload with an `origin` echoing the `X-Client-Id` header of the request that caused it. A `: ping` comment is sent every 25 seconds.',
         produces: ['text/event-stream'],
       },
     },

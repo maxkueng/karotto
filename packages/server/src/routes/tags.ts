@@ -49,6 +49,8 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tags',
     {
       schema: {
+        summary: 'List tags',
+        description: 'Ordered by position.',
         tags: ['tags'],
         response: { 200: z.array(tagSchema) },
       },
@@ -63,6 +65,8 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tags',
     {
       schema: {
+        summary: 'Create a tag',
+        description: 'Names are unique per user, ignoring case; a duplicate returns 409 `tag_exists`.',
         tags: ['tags'],
         body: tagCreateSchema,
         response: { 201: tagSchema },
@@ -88,6 +92,7 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tags/:id',
     {
       schema: {
+        summary: 'Rename a tag',
         tags: ['tags'],
         params: uuidParamsSchema,
         body: tagUpdateSchema,
@@ -111,6 +116,8 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tags/:id',
     {
       schema: {
+        summary: 'Delete a tag',
+        description: 'Removes it from every task.',
         tags: ['tags'],
         params: uuidParamsSchema,
         response: { 200: okSchema },
@@ -131,6 +138,8 @@ export const tagRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/tags/order',
     {
       schema: {
+        summary: 'Reorder tags',
+        description: 'Ids left out keep their relative order after the listed ones.',
         tags: ['tags'],
         body: tagOrderSchema,
         response: { 200: z.array(tagSchema) },

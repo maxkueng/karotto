@@ -39,6 +39,7 @@ export const userRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/user',
     {
       schema: {
+        summary: 'Get the current user',
         tags: ['user'],
         response: { 200: userSchema },
       },
@@ -53,6 +54,8 @@ export const userRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/user/preferences',
     {
       schema: {
+        summary: 'Update preferences',
+        description: 'Changing `dayStart` counts as a completed rollover for today.',
         tags: ['user'],
         body: preferencesUpdateSchema,
         response: { 200: userSchema },
@@ -86,6 +89,7 @@ export const userRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/user/password',
     {
       schema: {
+        summary: 'Change the password',
         tags: ['user'],
         body: passwordChangeSchema,
         response: { 200: okSchema },
@@ -113,6 +117,8 @@ export const userRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/user/tokens',
     {
       schema: {
+        summary: 'List API tokens',
+        description: 'Tokens are listed by prefix only; the full value is never returned again.',
         tags: ['tokens'],
         response: { 200: z.array(apiTokenSchema) },
       },
@@ -127,6 +133,7 @@ export const userRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/user/tokens',
     {
       schema: {
+        summary: 'Create an API token',
         tags: ['tokens'],
         body: apiTokenCreateSchema,
         response: { 201: apiTokenCreatedSchema },
@@ -154,6 +161,7 @@ export const userRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/user/tokens/:id',
     {
       schema: {
+        summary: 'Revoke an API token',
         tags: ['tokens'],
         params: uuidParamsSchema,
         response: { 200: okSchema },

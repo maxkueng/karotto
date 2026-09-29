@@ -871,6 +871,35 @@ describe(
 );
 
 describe(
+  'docs',
+  () => {
+    it(
+      'serves the OpenAPI spec with summaries and the interactive UI',
+      async () => {
+        const spec = await app.inject({
+          method: 'GET',
+          url: `${API_PREFIX}/openapi.json`,
+        });
+        expect(spec.statusCode).toBe(200);
+        const paths = spec.json<{ paths: Record<string, Record<string, {
+          summary?: string;
+          security?: unknown[];
+        }>>; }>().paths;
+        expect(paths['/api/v1/tasks/{id}/score/{direction}']?.post?.summary).toBe('Score a task up or down');
+        expect(Object.keys(paths).length).toBeGreaterThan(20);
+        expect(paths['/api/v1/auth/token']?.post?.security).toEqual([]);
+        const ui = await app.inject({
+          method: 'GET',
+          url: `${API_PREFIX}/docs/`,
+        });
+        expect(ui.statusCode).toBe(200);
+        expect(ui.headers['content-type']).toContain('text/html');
+      },
+    );
+  },
+);
+
+describe(
   'events',
   () => {
     it(

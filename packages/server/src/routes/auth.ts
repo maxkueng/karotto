@@ -35,6 +35,9 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
       },
       schema: {
         tags: ['auth'],
+        summary: 'Log in with username and password',
+        description: 'Starts a browser session and sets the `karotto_session` cookie. Scripts should use `POST /auth/token` instead.',
+        security: [],
         body: loginSchema,
         response: { 200: userSchema },
       },
@@ -98,6 +101,9 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
       },
       schema: {
         tags: ['auth'],
+        summary: 'Exchange credentials for an API token',
+        description: 'Creates a named long-lived token, the flow the Android app uses at login. The plain token is returned once; store it.',
+        security: [],
         body: tokenLoginSchema,
         response: { 201: apiTokenCreatedSchema },
       },
@@ -141,6 +147,7 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/auth/logout',
     {
       schema: {
+        summary: 'End the current session',
         tags: ['auth'],
         response: { 200: okSchema },
       },
@@ -167,6 +174,7 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
     '/auth/session',
     {
       schema: {
+        summary: 'Current user for the session or token',
         tags: ['auth'],
         response: { 200: userSchema },
       },
