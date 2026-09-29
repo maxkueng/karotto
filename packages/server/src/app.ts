@@ -53,7 +53,42 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  // Automation tools often POST with an empty body under a content type Fastify has no parser for.
+  // Automation tools often POST with an empty body, under JSON or a type Fastify has no parser for.
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (
+      _request,
+      body,
+      done,
+    ) => {
+      if (body === '') {
+        done(
+          null,
+          undefined,
+        );
+        return;
+      }
+      try {
+        done(
+          null,
+          JSON.parse(String(body)),
+        );
+      } catch {
+        done(
+          Object.assign(
+            new Error('Invalid JSON body'),
+            {
+              statusCode: 400,
+              code: 'invalid_json',
+            },
+          ),
+          undefined,
+        );
+      }
+    },
+  );
   app.addContentTypeParser(
     '*',
     { parseAs: 'string' },

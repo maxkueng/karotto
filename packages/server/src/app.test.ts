@@ -905,6 +905,25 @@ describe(
           },
         });
         expect(response.statusCode).toBe(200);
+        const emptyJson = await app.inject({
+          method: 'POST',
+          url: `${API_PREFIX}/cron`,
+          headers: {
+            ...bearer,
+            'content-type': 'application/json',
+          },
+        });
+        expect(emptyJson.statusCode).toBe(200);
+        const badJson = await app.inject({
+          method: 'POST',
+          url: `${API_PREFIX}/cron`,
+          headers: {
+            ...bearer,
+            'content-type': 'application/json',
+          },
+          payload: '{not json',
+        });
+        expect(badJson.statusCode).toBe(400);
         const withBody = await app.inject({
           method: 'POST',
           url: `${API_PREFIX}/tasks/${id}/score/up`,
