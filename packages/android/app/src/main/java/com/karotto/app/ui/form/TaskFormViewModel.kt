@@ -46,6 +46,7 @@ data class FormState(
     val value: Double = 0.0,
     val text: String = "",
     val notes: String = "",
+    val alias: String = "",
     val up: Boolean = true,
     val down: Boolean = false,
     val habitFrequency: HabitFrequency = HabitFrequency.DAILY,
@@ -112,6 +113,7 @@ class TaskFormViewModel(
             value = task.value,
             text = task.text,
             notes = task.notes,
+            alias = task.alias ?: "",
             tagIds = task.tags.toSet(),
             reminders = task.reminders.mapNotNull { reminder ->
                 Dates.parseReminder(reminder.time, ctx.zone)?.let { ReminderDraft(reminder.id, it) }
@@ -199,6 +201,7 @@ class TaskFormViewModel(
             if (!s.isEdit) put("type", s.type.apiName)
             put("text", s.text.trim())
             put("notes", s.notes.trim())
+            put("alias", s.alias.trim().ifEmpty { null })
             putJsonArray("tags") { s.tagIds.forEach { add(it) } }
             putJsonArray("reminders") {
                 s.reminders.forEach { reminder ->

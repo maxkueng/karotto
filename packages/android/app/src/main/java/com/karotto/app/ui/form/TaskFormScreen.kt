@@ -179,6 +179,14 @@ fun TaskFormScreen(viewModel: TaskFormViewModel, onClose: () -> Unit) {
                     RemindersEditor(state, palette, viewModel)
                 }
             }
+            SectionTitle("Alias", palette)
+            AliasField(state.alias, palette) { v -> viewModel.update { it.copy(alias = v) } }
+            Text(
+                "A short name that scripts, the CLI and automations can use instead of the id.",
+                fontSize = 12.sp,
+                color = palette.textSecondary,
+                modifier = Modifier.padding(top = 8.dp),
+            )
             SectionTitle("Tags", palette)
             TagsSection(state, palette, viewModel)
         }
@@ -399,6 +407,24 @@ private fun <T> Selector(options: List<Pair<T, String>>, selected: T, palette: F
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AliasField(value: String, palette: FormPalette, onChange: (String) -> Unit) {
+    FieldCard("Alias", palette, Modifier.fillMaxWidth()) {
+        BasicTextField(
+            value = value,
+            onValueChange = { v -> if (v.length <= 64 && v.all { it.isLetterOrDigit() || it == '-' || it == '_' }) onChange(v) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+            textStyle = TextStyle(fontSize = 16.sp, color = KarottoTheme.colors.textPrimary),
+            cursorBrush = SolidColor(palette.uiSub),
+            modifier = Modifier.fillMaxWidth(),
+            decorationBox = { inner ->
+                Box { if (value.isEmpty()) Text("e.g. shower", fontSize = 16.sp, color = palette.textSecondary); inner() }
+            },
+        )
     }
 }
 

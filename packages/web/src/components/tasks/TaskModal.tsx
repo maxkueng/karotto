@@ -51,6 +51,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { DisclosureChevron } from '@/components/ui/Disclosure';
 import {
   FieldGroup,
+  Input,
   InputGroupAddon,
   InputGroupField,
   Label,
@@ -79,6 +80,7 @@ export type TaskModalMode
 type Draft = {
   text: string;
   notes: string;
+  alias: string;
   tags: string[];
   reminders: Reminder[];
   checklist: ChecklistItem[];
@@ -111,6 +113,7 @@ function draftFrom(
   const base: Draft = {
     text: '',
     notes: '',
+    alias: '',
     tags: [],
     reminders: [],
     checklist: [],
@@ -142,6 +145,7 @@ function draftFrom(
     ...base,
     text: task.text,
     notes: task.notes,
+    alias: task.alias ?? '',
     tags: [...task.tags],
     reminders: task.reminders.map((reminder) => ({ ...reminder })),
   };
@@ -272,6 +276,7 @@ function TaskModalBody(props: BodyProps) {
     const common = {
       text: draft.text.trim(),
       notes: draft.notes,
+      alias: draft.alias.trim() === '' ? null : draft.alias.trim(),
       tags: draft.tags,
       reminders: draft.reminders,
     };
@@ -538,6 +543,24 @@ function TaskModalBody(props: BodyProps) {
                 Advanced Settings
               </Button>
               <Show when={advancedOpen()}>
+                <Spacer top="md">
+                  <Label for="task-alias">Alias</Label>
+                  <Input
+                    id="task-alias"
+                    size="sm"
+                    placeholder="e.g. shower"
+                    autocomplete="off"
+                    spellcheck={false}
+                    value={draft.alias}
+                    onInput={(event) => setDraft(
+                      'alias',
+                      event.currentTarget.value,
+                    )}
+                  />
+                  <Spacer top="xs">
+                    <Text tone="help">A short name that scripts, the CLI and automations can use instead of the id. Letters, digits, dashes and underscores.</Text>
+                  </Spacer>
+                </Spacer>
                 <Show when={type() === 'daily'}>
                   <Spacer top="md">
                     <Label for="task-streak">Adjust Streak</Label>
