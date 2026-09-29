@@ -16,6 +16,8 @@ analysis the implementation was derived from.
 | `packages/server` | Fastify API, Drizzle/Postgres, auth, CLI |
 | `packages/web` | Vite + SolidJS + Tailwind client |
 | `packages/android` | Native Kotlin + Jetpack Compose app, UI modelled on the Habitica Android client |
+| `packages/cli` | `karotto`, the command-line client for the API, JSON output for scripts and agents |
+| `skills/karotto` | Agent skill teaching the `karotto` CLI |
 
 ## Development
 
@@ -103,14 +105,35 @@ subscribe while open; a wall dashboard only needs the web app.
 curl -N -H "Authorization: Bearer krt_..." http://localhost:3210/api/v1/events
 ```
 
-## CLI
+## Command-line client
+
+`karotto` is a separate client for humans, scripts and AI agents. It only
+speaks to the API; the server's own maintenance commands are `karotto-admin`.
+
+```sh
+karotto login --url https://karotto.example.ts.net -u max   # stores a token in ~/.config/karotto
+karotto tasks list --due
+karotto tasks add todo "Buy carrots" --due 2026-10-03 --tag errands --alias carrots
+karotto done carrots
+karotto cron status --json
+```
+
+Every command takes `--json`. `KAROTTO_URL` and `KAROTTO_TOKEN` override the
+stored login for scripts. The deploy script installs it next to the server;
+elsewhere build it with `npm run build -w @karotto/cli` and run
+`packages/cli/dist/main.js`. `skills/karotto/SKILL.md` is a drop-in skill for
+agents that can run shell commands.
+
+## Server administration
+
+Run on the server (the deploy script installs it as `karotto-admin`):
 
 ```
-karotto migrate
-karotto user create <username> [--password-stdin] [--timezone <IANA>]
-karotto user list | password <username> | delete <username>
-karotto token create <username> --name <label> [--expires <iso>]
-karotto token list <username> | revoke <username> <id>
+karotto-admin migrate
+karotto-admin user create <username> [--password-stdin] [--timezone <IANA>]
+karotto-admin user list | password <username> | delete <username>
+karotto-admin token create <username> --name <label> [--expires <iso>]
+karotto-admin token list <username> | revoke <username> <id>
 ```
 
 In development run it through `npm run cli -w @karotto/server -- <args>`; in
@@ -124,7 +147,7 @@ Tailscale (or any TLS-terminating proxy) in front:
 ```sh
 git clone <this repo> ~/karotto
 sudo ~/karotto/deploy/install.sh
-sudo karotto user create max --timezone Europe/Zurich
+sudo karotto-admin user create max --timezone Europe/Zurich
 ```
 
 Re-run the installer after `git pull` to update. Full walkthrough, including

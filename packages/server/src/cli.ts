@@ -135,7 +135,7 @@ async function requireUser(
 }
 
 await yargs(hideBin(process.argv))
-  .scriptName('karotto')
+  .scriptName('karotto-admin')
   .command(
     'migrate',
     'Apply pending database migrations',

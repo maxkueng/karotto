@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Admin wrapper: runs the server's maintenance commands (users, tokens, migrations) with the service's environment.
+set -euo pipefail
+ENV_FILE=${KAROTTO_ENV_FILE:-/etc/karotto/env}
+INSTALL_DIR=${KAROTTO_INSTALL_DIR:-/opt/karotto/src}
+[[ -r "$ENV_FILE" ]] || { echo "cannot read $ENV_FILE (try sudo)" >&2; exit 1; }
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
+cd "$INSTALL_DIR"
+exec node packages/server/dist/cli.js "$@"

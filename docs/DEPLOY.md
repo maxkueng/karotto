@@ -31,14 +31,15 @@ The installer is idempotent. It:
   `karotto` database, and writes `/etc/karotto/env` (root-owned, readable by
   the service);
 - runs `npm ci`, `npm run build`, then prunes dev dependencies;
-- installs `karotto.service`, a nightly `karotto-backup.timer`, and the
-  `karotto` CLI wrapper in `/usr/local/bin`;
+- installs `karotto.service`, a nightly `karotto-backup.timer`, the
+  `karotto-admin` maintenance command and the `karotto` client in
+  `/usr/local/bin`;
 - applies migrations and starts the service.
 
 Then create your account:
 
 ```sh
-sudo karotto user create max --timezone Europe/Zurich
+sudo karotto-admin user create max --timezone Europe/Zurich
 sudo journalctl -u karotto -f
 ```
 
@@ -128,8 +129,8 @@ browser will drop the session cookie.
 | Update to the latest version | `cd ~/karotto && git pull && sudo deploy/install.sh` |
 | Logs | `journalctl -u karotto -f` |
 | Restart | `systemctl restart karotto` |
-| Create a user / API token | `karotto user create <name>`, `karotto token create <name> --name scripts` |
-| Change a password | `karotto user password <name>` |
+| Create a user / API token | `karotto-admin user create <name>`, `karotto-admin token create <name> --name scripts` |
+| Change a password | `karotto-admin user password <name>` |
 | Manual backup | `systemctl start karotto-backup` |
 | Restore a backup | `zcat /var/backups/karotto/karotto-<stamp>.sql.gz \| sudo -u postgres psql karotto` |
 

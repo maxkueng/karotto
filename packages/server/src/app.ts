@@ -28,7 +28,7 @@ export const API_PREFIX = '/api/v1';
 
 const API_DESCRIPTION = `Habitica's task model without the game: habits, dailies and to-dos with value colours, streaks, checklists, tags, reminders and a custom day start.
 
-**Authentication.** Every route except \`/auth/login\` and \`/auth/token\` needs either the session cookie a browser gets from \`/auth/login\`, or an API token sent as \`Authorization: Bearer krt_…\`. Create tokens in Settings, with \`karotto token create <user>\` on the server, or with \`POST /auth/token\`. Use the **Authorize** button above to try requests here.
+**Authentication.** Every route except \`/auth/login\` and \`/auth/token\` needs either the session cookie a browser gets from \`/auth/login\`, or an API token sent as \`Authorization: Bearer krt_…\`. Create tokens in Settings, with \`karotto-admin token create <user>\` on the server, or with \`POST /auth/token\`. Use the **Authorize** button above to try requests here.
 
 **Ids and aliases.** Wherever a path takes a task id you may pass the task's alias instead.
 

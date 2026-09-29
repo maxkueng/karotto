@@ -102,10 +102,11 @@ build_app() {
   log "installing dependencies and building"
   sudo -u "$APP_USER" -H bash -c "cd '$INSTALL_DIR' && npm ci --no-audit --no-fund --loglevel=error && npm run build --silent"
   log "pruning development dependencies"
-  sudo -u "$APP_USER" -H bash -c "cd '$INSTALL_DIR' && npm ci --omit=dev --workspace @karotto/server --no-audit --no-fund --loglevel=error"
+  sudo -u "$APP_USER" -H bash -c "cd '$INSTALL_DIR' && npm ci --omit=dev --workspace @karotto/server --workspace @karotto/cli --no-audit --no-fund --loglevel=error"
 }
 
 install_units() {
+  install -m 755 "$script_dir/karotto-admin" /usr/local/bin/karotto-admin
   install -m 755 "$script_dir/karotto" /usr/local/bin/karotto
   install -m 755 "$script_dir/backup.sh" /opt/karotto/backup.sh
   [[ $systemd_available -eq 1 ]] || return 0
@@ -118,7 +119,7 @@ install_units() {
 
 migrate_and_start() {
   log "applying migrations"
-  /usr/local/bin/karotto migrate
+  /usr/local/bin/karotto-admin migrate
   [[ $systemd_available -eq 1 ]] || return 0
   systemctl enable --now karotto-backup.timer >/dev/null
   systemctl enable karotto >/dev/null
@@ -144,7 +145,8 @@ migrate_and_start
 cat <<MSG
 
 Done. Next steps:
-  sudo karotto user create <username> --timezone Europe/Zurich
+  sudo karotto-admin user create <username> --timezone Europe/Zurich
+  karotto login --url http://127.0.0.1:3210 -u <username>       # command-line client, optional
   sudo journalctl -u karotto -f
 The app listens on 127.0.0.1:3210; put Cloudflare Tunnel or a reverse proxy in front (see docs/DEPLOY.md).
 MSG

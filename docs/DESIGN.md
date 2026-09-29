@@ -197,8 +197,8 @@ endpoint repairs and persists order on GET).
 
 ## Users
 
-No self-registration. `karotto user create <username>` and
-`karotto token create <username> --name <label>` on the server. Multi-user is
+No self-registration. `karotto-admin user create <username>` and
+`karotto-admin token create <username> --name <label>` on the server. Multi-user is
 first class in the schema; every query is scoped by `user_id`.
 
 ## Not in v1
