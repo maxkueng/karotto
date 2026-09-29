@@ -21,7 +21,10 @@ import {
   Show,
 } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { ChecklistEditor } from '@/components/tasks/ChecklistEditor';
+import {
+  ChecklistEditor,
+  newChecklistItem,
+} from '@/components/tasks/ChecklistEditor';
 import {
   palettes,
   paletteFor,
@@ -67,7 +70,6 @@ import {
   Text,
 } from '@/components/ui/Typography';
 import { todayIso } from '@/lib/dates';
-import { newId } from '@/lib/ids';
 import { useSession } from '@/stores/session';
 
 export type TaskModalMode
@@ -265,11 +267,7 @@ function TaskModalBody(props: BodyProps) {
     }
     return [
       ...items,
-      {
-        id: newId(),
-        text: pending,
-        completed: false,
-      },
+      newChecklistItem(pending),
     ];
   };
 

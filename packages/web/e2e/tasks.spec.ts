@@ -143,7 +143,7 @@ test(
     await page.keyboard.type(' done');
     await expect(firstItem).toHaveValue('first step done');
     await page.keyboard.press('Enter');
-    await expect(page.locator('[aria-label="Checklist item"]').nth(1)).toBeFocused();
+    await expect(page.locator('input[placeholder="New checklist item"]')).toBeFocused();
     await page.keyboard.type('second step');
     await page.click('[role=dialog] button:has-text("Save")');
     await expect(todoCard).toContainText('notes');

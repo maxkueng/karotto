@@ -3,10 +3,8 @@ import GripVertical from 'lucide-solid/icons/grip-vertical';
 import Plus from 'lucide-solid/icons/plus';
 import Trash from 'lucide-solid/icons/trash';
 import {
-  createEffect,
   createSignal,
   Index,
-  on,
   Show,
 } from 'solid-js';
 import { Button } from '@/components/ui/Button';
@@ -123,33 +121,26 @@ type ChecklistEditorProps = {
   onPendingChange: (text: string) => void;
 };
 
-type FocusTarget = number | 'pending' | null;
+export const newChecklistItem = (text = ''): ChecklistItem => ({
+  id: newId(),
+  text,
+  completed: false,
+});
 
 export function ChecklistEditor(props: ChecklistEditorProps) {
   const [
     open,
     setOpen,
   ] = createSignal(true);
-  const [
-    focusAt,
-    setFocusAt,
-  ] = createSignal<FocusTarget>(null);
   let list: HTMLDivElement | undefined;
   let pendingInput: HTMLInputElement | undefined;
 
-  createEffect(on(
-    focusAt,
-    (target) => {
-      if (target === null) {
-        return;
-      }
-      const input = target === 'pending'
-        ? pendingInput
-        : list?.querySelectorAll<HTMLInputElement>('input[aria-label="Checklist item"]')[target];
-      input?.focus();
-      setFocusAt(null);
-    },
-  ));
+  const focusItem = (index: number) => {
+    const input = index >= props.items.length
+      ? pendingInput
+      : list?.querySelectorAll<HTMLInputElement>('input[aria-label="Checklist item"]')[index];
+    input?.focus();
+  };
 
   const update = (
     id: string,
@@ -163,29 +154,19 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
       : item)));
   };
 
-  const remove = (id: string) => props.onChange(props.items.filter((item) => item.id !== id));
+  const remove = (index: number) => props.onChange(props.items.filter((
+    _,
+    position,
+  ) => position !== index));
 
   const insertAfter = (index: number) => {
     const next = [...props.items];
     next.splice(
       index + 1,
       0,
-      {
-        id: newId(),
-        text: '',
-        completed: false,
-      },
+      newChecklistItem(),
     );
     props.onChange(next);
-    setFocusAt(index + 1);
-  };
-
-  const removeAt = (index: number) => {
-    props.onChange(props.items.filter((
-      _,
-      position,
-    ) => position !== index));
-    setFocusAt(index === 0 ? 'pending' : index - 1);
   };
 
   const onItemKeyDown = (
@@ -194,10 +175,14 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
   ) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      insertAfter(index);
+      if (index < props.items.length - 1) {
+        insertAfter(index);
+      }
+      focusItem(index + 1);
     } else if (event.key === 'Backspace' && event.currentTarget.value === '') {
       event.preventDefault();
-      removeAt(index);
+      remove(index);
+      focusItem(index === 0 ? props.items.length : index - 1);
     }
   };
 
@@ -208,11 +193,7 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
     }
     props.onChange([
       ...props.items,
-      {
-        id: newId(),
-        text,
-        completed: false,
-      },
+      newChecklistItem(text),
     ]);
     props.onPendingChange('');
   };
@@ -288,7 +269,7 @@ export function ChecklistEditor(props: ChecklistEditorProps) {
                       layout="icon-danger"
                       aria-label="Remove checklist item"
                       icon={<Trash size={14} />}
-                      onClick={() => remove(item().id)}
+                      onClick={() => remove(index)}
                     />
                   </RevealOnRowHover>
                 </ItemRow>

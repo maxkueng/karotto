@@ -472,7 +472,6 @@ private fun ChecklistEditor(state: FormState, palette: FormPalette, viewModel: T
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         state.checklist.forEachIndexed { index, item ->
             val isAddRow = index == state.checklist.lastIndex
-            val blankAddRow = isAddRow && item.text.isEmpty()
             FormRow(palette, filled = !isAddRow, onRemove = if (isAddRow) null else ({ viewModel.removeChecklistItem(item.key) })) {
                 BasicTextField(
                     value = item.text,
@@ -480,7 +479,7 @@ private fun ChecklistEditor(state: FormState, palette: FormPalette, viewModel: T
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = if (blankAddRow) ImeAction.Done else ImeAction.Next,
+                        imeAction = if (isAddRow) ImeAction.Done else ImeAction.Next,
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) },
