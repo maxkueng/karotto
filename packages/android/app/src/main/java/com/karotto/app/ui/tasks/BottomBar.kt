@@ -75,6 +75,7 @@ private class NotchedBarShape : Shape {
 @Composable
 fun BoxScope.TasksBottomBar(
     selected: TaskType,
+    showTabs: Boolean,
     speedDialOpen: Boolean,
     onSelect: (TaskType) -> Unit,
     onCreate: () -> Unit,
@@ -89,6 +90,19 @@ fun BoxScope.TasksBottomBar(
                 .background(Color.Black.copy(alpha = 0.25f))
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onToggleSpeedDial),
         )
+    }
+    if (!showTabs) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
+                .padding(end = 24.dp, bottom = 24.dp),
+            horizontalAlignment = Alignment.End,
+        ) {
+            SpeedDial(open = speedDialOpen, onCreateOfType = onCreateOfType, alignment = Alignment.End)
+            Fab(open = speedDialOpen, onClick = { if (speedDialOpen) onToggleSpeedDial() else onCreate() }, onLongClick = onToggleSpeedDial)
+        }
+        return
     }
     Column(
         modifier = Modifier
@@ -109,13 +123,15 @@ fun BoxScope.TasksBottomBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(Modifier.weight(1f)) {
-                    BarItem(TaskType.HABIT, selected == TaskType.HABIT, onSelect)
-                    BarItem(TaskType.DAILY, selected == TaskType.DAILY, onSelect)
+                    if (showTabs) {
+                        BarItem(TaskType.HABIT, selected == TaskType.HABIT, onSelect)
+                        BarItem(TaskType.DAILY, selected == TaskType.DAILY, onSelect)
+                    }
                 }
                 Spacer(Modifier.width(96.dp))
                 Row(Modifier.weight(1f)) {
                     Spacer(Modifier.weight(0.5f))
-                    BarItem(TaskType.TODO, selected == TaskType.TODO, onSelect)
+                    if (showTabs) BarItem(TaskType.TODO, selected == TaskType.TODO, onSelect)
                     Spacer(Modifier.weight(0.5f))
                 }
             }
@@ -169,12 +185,16 @@ private fun Fab(open: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
 }
 
 @Composable
-private fun SpeedDial(open: Boolean, onCreateOfType: (TaskType) -> Unit) {
+private fun SpeedDial(
+    open: Boolean,
+    onCreateOfType: (TaskType) -> Unit,
+    alignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+) {
     val colors = KarottoTheme.colors
     val brand = KarottoTheme.palette.brand
     Column(
         modifier = Modifier.padding(bottom = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = alignment,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TaskType.entries.forEachIndexed { index, type ->

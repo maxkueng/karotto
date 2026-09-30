@@ -1,15 +1,22 @@
 package com.karotto.app.ui.tasks
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,9 +40,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -74,6 +81,9 @@ import kotlinx.coroutines.launch
 /** Keeps the dropped order on screen until the store confirms it, so the card never snaps back. */
 private const val PENDING_ORDER_TIMEOUT_MS = 3_000L
 
+private val WIDE_LAYOUT_MIN_WIDTH = 840.dp
+private val STACKED_HEADER_MAX_COLUMN_WIDTH = 400.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
@@ -87,7 +97,7 @@ fun TasksScreen(
     val pager = rememberPagerState(initialPage = 1) { TaskType.entries.size }
     val scope = rememberCoroutineScope()
     var speedDial by remember { mutableStateOf(false) }
-    var filterOpen by remember { mutableStateOf(false) }
+    var filterFor by remember { mutableStateOf<TaskType?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val currentType = TaskType.entries[pager.currentPage]
 
@@ -106,37 +116,61 @@ fun TasksScreen(
         snapshotFlow { pager.currentPage }.collect { if (state.searchOpen) viewModel.setSearchOpen(false) }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.contentBackground),
     ) {
+        val wide = maxWidth >= WIDE_LAYOUT_MIN_WIDTH
         Column(Modifier.fillMaxSize()) {
             TasksTopBar(
                 state = state,
-                type = currentType,
+                type = if (wide) null else currentType,
                 onSearchChange = viewModel::setSearch,
                 onSearchOpen = viewModel::setSearchOpen,
-                onFilter = { filterOpen = true },
+                onFilter = { filterFor = currentType },
                 onSettings = onOpenSettings,
                 onClearCompleted = viewModel::clearCompleted,
             )
             if (state.offline) ConnectionBanner(state.pendingCount)
-            HorizontalPager(state = pager, modifier = Modifier.weight(1f), beyondViewportPageCount = 2) { page ->
-                val type = TaskType.entries[page]
-                TaskListPage(
-                    type = type,
-                    state = state,
-                    viewModel = viewModel,
-                    onOpenTask = onOpenTask,
-                )
+            if (wide) {
+                Row(Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                    TaskType.entries.forEach { type ->
+                        Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                            ColumnHeader(
+                                type = type,
+                                state = state,
+                                onSelectFilter = { viewModel.setFilter(type, it) },
+                                onOpenFilters = { filterFor = type },
+                                onClearCompleted = viewModel::clearCompleted,
+                            )
+                            TaskListPage(
+                                type = type,
+                                state = state,
+                                viewModel = viewModel,
+                                onOpenTask = onOpenTask,
+                            )
+                        }
+                    }
+                }
+            } else {
+                HorizontalPager(state = pager, modifier = Modifier.weight(1f), beyondViewportPageCount = 2) { page ->
+                    val type = TaskType.entries[page]
+                    TaskListPage(
+                        type = type,
+                        state = state,
+                        viewModel = viewModel,
+                        onOpenTask = onOpenTask,
+                    )
+                }
             }
         }
         TasksBottomBar(
             selected = currentType,
+            showTabs = !wide,
             speedDialOpen = speedDial,
             onSelect = { type -> scope.launch { pager.animateScrollToPage(type.ordinal) } },
-            onCreate = { onCreate(currentType, state.selectedTagIds) },
+            onCreate = { if (wide) speedDial = true else onCreate(currentType, state.selectedTagIds) },
             onToggleSpeedDial = { speedDial = !speedDial },
             onCreateOfType = { type ->
                 speedDial = false
@@ -165,14 +199,14 @@ fun TasksScreen(
             onStart = viewModel::startDay,
         )
     }
-    if (filterOpen) {
+    filterFor?.let { type ->
         FilterSheet(
-            type = currentType,
+            type = type,
             state = state,
-            onDismiss = { filterOpen = false },
-            onFilter = { viewModel.setFilter(currentType, it) },
+            onDismiss = { filterFor = null },
+            onFilter = { viewModel.setFilter(type, it) },
             onToggleTag = viewModel::toggleTag,
-            onClear = { viewModel.clearFilters(currentType) },
+            onClear = { viewModel.clearFilters(type) },
             onCreateTag = { viewModel.createTag(it) },
             onRenameTag = viewModel::renameTag,
             onDeleteTag = viewModel::deleteTag,
@@ -183,7 +217,7 @@ fun TasksScreen(
 @Composable
 private fun TasksTopBar(
     state: TasksState,
-    type: TaskType,
+    type: TaskType?,
     onSearchChange: (String) -> Unit,
     onSearchOpen: (Boolean) -> Unit,
     onFilter: () -> Unit,
@@ -241,13 +275,15 @@ private fun TasksTopBar(
             IconButton(onClick = { onSearchOpen(true) }) {
                 Icon(Icons.Rounded.Search, contentDescription = "Search", tint = colors.textTitle)
             }
-            val active = state.activeFilterCount > 0
-            IconButton(onClick = onFilter) {
-                Icon(
-                    Icons.Rounded.FilterList,
-                    contentDescription = "Filter",
-                    tint = if (active) colors.accent else colors.textTitle,
-                )
+            if (type != null) {
+                val active = state.activeFilterCount > 0
+                IconButton(onClick = onFilter) {
+                    Icon(
+                        Icons.Rounded.FilterList,
+                        contentDescription = "Filter",
+                        tint = if (active) colors.accent else colors.textTitle,
+                    )
+                }
             }
             Box {
                 IconButton(onClick = { menuOpen = true }) {
@@ -291,6 +327,101 @@ private fun ConnectionBanner(pending: Int) {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ColumnHeader(
+    type: TaskType,
+    state: TasksState,
+    onSelectFilter: (String) -> Unit,
+    onOpenFilters: () -> Unit,
+    onClearCompleted: () -> Unit,
+) {
+    val colors = KarottoTheme.colors
+    val count = state.visible(type).size
+    val title: @Composable RowScope.() -> Unit = {
+        Text(type.label, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.textTitle, maxLines = 1)
+        Box(
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.accent)
+                .padding(horizontal = 7.dp, vertical = 1.dp),
+        ) {
+            Text("$count", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        }
+    }
+    val controls: @Composable RowScope.() -> Unit = {
+        if (type == TaskType.TODO && state.filter.todo == "complete" && count > 0) {
+            Text(
+                "Clear",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.textRed,
+                maxLines = 1,
+                modifier = Modifier.clickable(onClick = onClearCompleted).padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+        FilterTabs(options = filterOptions(type), selected = state.filterFor(type), onSelect = onSelectFilter)
+        val tagged = state.selectedTagIds.isNotEmpty()
+        IconButton(onClick = onOpenFilters) {
+            Icon(
+                Icons.Rounded.FilterList,
+                contentDescription = "Filter ${type.label}",
+                tint = if (tagged) colors.accent else colors.textTitle,
+            )
+        }
+    }
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp)) {
+        if (maxWidth < STACKED_HEADER_MAX_COLUMN_WIDTH) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically, content = title)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.weight(1f))
+                    controls()
+                }
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                title()
+                Spacer(Modifier.weight(1f))
+                controls()
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterTabs(options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+    val colors = KarottoTheme.colors
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        options.forEach { (value, label) ->
+            val active = value == selected
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable { onSelect(value) }
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = label,
+                    fontSize = 14.sp,
+                    fontWeight = if (active) FontWeight.Medium else FontWeight.Normal,
+                    color = if (active) colors.accent else colors.textSecondary,
+                    maxLines = 1,
+                    softWrap = false,
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(top = 3.dp)
+                        .width(20.dp)
+                        .height(2.dp)
+                        .background(if (active) colors.accent else Color.Transparent),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun TaskListPage(
     type: TaskType,
