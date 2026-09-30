@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val releaseKeystore = System.getenv("KAROTTO_KEYSTORE")?.let(::file)?.takeIf { it.exists() }
+
 android {
     namespace = "com.karotto.app"
     compileSdk = 37
@@ -13,14 +15,26 @@ android {
         applicationId = "com.karotto.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = System.getenv("KAROTTO_VERSION_CODE")?.toInt() ?: 1
+        versionName = System.getenv("KAROTTO_VERSION_NAME") ?: "0.1.0-dev"
+    }
+
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("KAROTTO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KAROTTO_KEY_ALIAS")
+                keyPassword = System.getenv("KAROTTO_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

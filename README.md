@@ -93,20 +93,33 @@ npm run themes:android -w @karotto/core    # Kotlin palettes for the Android app
 
 ## Android app
 
+Install the signed APK from the latest
+[`android-v*` release](https://github.com/maxkueng/karotto/releases). Point
+[Obtainium](https://github.com/ImranR98/Obtainium) at this repository to get
+updates. On first start enter your server URL, username and password; the app
+creates its own API token and never stores the password.
+
 `packages/android` is a standalone Gradle project (not an npm workspace). It
 talks to the same API with a long-lived token created through
 `POST /api/v1/auth/token` from the login screen, caches tasks in Room, scores
 optimistically with an offline queue, computes daily due-ness locally and
 delivers reminders as exact alarms.
 
-Requirements: JDK 21, Android SDK with platform 37. The Gradle wrapper fetches
-everything else.
+Building it yourself needs JDK 21 and an Android SDK with platform 37. The
+Gradle wrapper fetches everything else.
 
 ```sh
 cd packages/android
 ./gradlew installDebug          # build and install on the connected device/emulator
 ./gradlew testDebugUnitTest     # scheduling/scoring/day-context tests
 ```
+
+Releases are cut by tagging: `git tag android-v0.2.0 && git push --tags`.
+The `Android release` workflow builds a signed APK, derives the version from
+the tag and attaches the file to a GitHub release. Signing needs the four
+`ANDROID_*` repository secrets (base64 keystore, its password, key alias, key
+password); without a keystore a local `assembleRelease` produces an unsigned
+APK.
 
 Server URL on the login screen:
 
