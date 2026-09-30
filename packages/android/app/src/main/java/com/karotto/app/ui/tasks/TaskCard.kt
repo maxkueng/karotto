@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -125,7 +126,7 @@ private fun HabitStrip(task: Habit, direction: Direction, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(ramp.medium),
+                    .background(lerp(ramp.medium, ramp.dark, 0.5f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(glyph, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
