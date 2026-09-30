@@ -1,0 +1,36 @@
+# karotto with its own Postgres. Copy this file and env.example (as .env) into a
+# directory, set POSTGRES_PASSWORD, then `docker compose up -d`.
+services:
+  app:
+    image: ghcr.io/maxkueng/karotto:${KAROTTO_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://karotto:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/karotto
+      # The app speaks plain HTTP. Keep SECURE_COOKIES off unless a proxy in front
+      # terminates TLS, or browsers will drop the session cookie.
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${KAROTTO_PORT:-3000}:3000"
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: karotto
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: karotto
+    volumes:
+      - karotto-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U karotto -d karotto"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  karotto-db:

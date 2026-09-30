@@ -222,17 +222,16 @@ Re-run the installer after `git pull` to update. Full walkthrough, including
 requirements, access options, backups and configuration:
 [docs/DEPLOY.md](docs/DEPLOY.md).
 
-A `Dockerfile` (API plus static web app in one image) and a
-`docker-compose.yml` for Postgres are there for container setups:
+Prefer containers? A published image, `ghcr.io/maxkueng/karotto` for amd64
+and arm64, plus `deploy/docker/compose.yaml` with Postgres included:
 
 ```sh
-docker build -t karotto .
-docker run -e DATABASE_URL=postgres://... -p 3210:3000 karotto
+docker compose up -d
+docker compose exec app karotto-admin user create max --timezone Europe/Zurich
 ```
 
-Migrations run on boot (`AUTO_MIGRATE=true`). Set `TRUST_PROXY=true` behind a
-reverse proxy and leave `SECURE_COOKIES` at its production default (on) so the
-session cookie is only sent over HTTPS.
+Details, tags, backups and the reverse-proxy settings are in the Docker
+section of [docs/DEPLOY.md](docs/DEPLOY.md#docker).
 
 
 ## Credits

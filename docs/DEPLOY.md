@@ -203,9 +203,76 @@ Every client takes the URL you chose above.
   credentials. See `docs/HOME_ASSISTANT.md`; on Home Assistant OS with
   Tailscale the Supervisor DNS needs to resolve `*.ts.net` names.
 
-## Docker instead
+## Docker
 
-The repository also ships a `Dockerfile` that builds the same thing into one
-image (API plus static web app) and a `docker-compose.yml` for Postgres. Use
-it if you already run everything in containers; the systemd path above is
-otherwise simpler to keep updated and back up.
+The same app as a published image, `ghcr.io/maxkueng/karotto`, built for
+amd64 and arm64 on Alpine. Use it on a NAS, in a Proxmox VM, or anywhere you
+already run containers. It bundles the API, the web app, `karotto-admin` and
+the `karotto` client; Postgres runs as a second container.
+
+### Start
+
+Make a directory, put `deploy/docker/compose.yaml` and `deploy/docker/env.example`
+in it, rename the second to `.env`, and set `POSTGRES_PASSWORD`:
+
+```sh
+mkdir karotto && cd karotto
+curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/compose.yaml
+curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/env.example -o .env
+$EDITOR .env
+docker compose up -d
+docker compose exec app karotto-admin user create max --timezone Europe/Zurich
+```
+
+The app is on `http://<host>:3000`. Migrations run when the container starts.
+
+The image ships the client too, so the CLI works from inside the container:
+
+```sh
+docker compose exec app karotto login --url http://localhost:3000 -u max
+docker compose exec app karotto tasks list
+```
+
+### Tags
+
+| Tag | What |
+|---|---|
+| `latest` | Newest release |
+| `0.2.0`, `0.2` | A specific release, or its newest patch |
+| `edge` | Every push to `master`. Fine for trying things, not for keeping |
+
+Pin `KAROTTO_VERSION` in `.env` if you don't want `docker compose pull` to
+move you to a new major version unattended.
+
+### Update
+
+```sh
+docker compose pull && docker compose up -d
+```
+
+### Back up
+
+The only state is the database. A dump from the `db` container is a
+consistent backup; a snapshot of the volume is not.
+
+```sh
+docker compose exec db pg_dump -U karotto karotto | gzip > karotto-$(date +%F).sql.gz
+zcat karotto-2026-09-30.sql.gz | docker compose exec -T db psql -U karotto karotto   # restore
+```
+
+### Reach it
+
+Everything under [Access](#4-access) applies: put Tailscale Serve, Caddy or
+another TLS proxy in front of port 3000 and set `SECURE_COOKIES=true` and
+`TRUST_PROXY=true` in `.env`. Without a proxy, leave `SECURE_COOKIES=false`
+or browsers will refuse the session cookie over plain HTTP.
+
+### Build it yourself
+
+```sh
+docker build -t karotto .
+```
+
+The Dockerfile builds the JavaScript once on the host's architecture and
+installs runtime dependencies on the target's, so cross-building is cheap:
+`docker buildx build --platform linux/arm64 .` works on an x86 machine.
