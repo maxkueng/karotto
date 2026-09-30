@@ -17,6 +17,7 @@ android {
         targetSdk = 37
         versionCode = System.getenv("KAROTTO_VERSION_CODE")?.toInt() ?: 1
         versionName = System.getenv("KAROTTO_VERSION_NAME") ?: "0.1.0-dev"
+        resValue("string", "app_name", "karotto")
     }
 
     signingConfigs {
@@ -31,6 +32,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            resValue("string", "app_name", "karotto dev")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -41,6 +47,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 
     compileOptions {

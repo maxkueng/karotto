@@ -114,6 +114,10 @@ cd packages/android
 ./gradlew testDebugUnitTest     # scheduling/scoring/day-context tests
 ```
 
+Debug builds install as a separate app, "karotto dev" with the id
+`com.karotto.app.debug`, so they sit next to the released app instead of
+replacing it.
+
 Releases are cut by tagging: `git tag android-v0.2.0 && git push --tags`.
 The `Android release` workflow builds a signed APK, derives the version from
 the tag and attaches the file to a GitHub release. Signing needs the four
