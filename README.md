@@ -60,7 +60,7 @@ everything borrowed are in `THIRD_PARTY_NOTICES.md`.
 | `packages/android` | Native Kotlin + Jetpack Compose app, UI modelled on the Habitica Android client |
 | `packages/cli` | `karotto`, the command-line client for the API, JSON output for scripts and agents |
 | `skills/karotto` | Agent skill teaching the `karotto` CLI |
-| `custom_components/karotto` | Home Assistant integration: to-do lists, sensors and actions, live over SSE. See `docs/HOME_ASSISTANT.md` |
+| [`karotto-ha-integration`](https://github.com/maxkueng/karotto-ha-integration) | Home Assistant integration, its own repository so HACS can install it. See `docs/HOME_ASSISTANT.md` |
 
 ## Development
 

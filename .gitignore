@@ -7,8 +7,5 @@ dist/
 coverage/
 playwright-report/
 test-results/
-.venv/
-__pycache__/
-.ruff_cache/
 *.jks
 *.keystore

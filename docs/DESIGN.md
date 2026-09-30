@@ -43,7 +43,7 @@ one column and one select.
 | Icons | lucide-solid |
 | Android | `packages/android`, Kotlin + Jetpack Compose, Room cache, OkHttp, standalone Gradle project |
 | CLI / MCP | `@karotto/cli`, yargs; `karotto mcp` serves the same operations over the Model Context Protocol |
-| Home Assistant | `custom_components/karotto`, Python, config flow, todo + sensor platforms |
+| Home Assistant | [`karotto-ha-integration`](https://github.com/maxkueng/karotto-ha-integration), Python, config flow, todo + sensor platforms |
 | Themes | `core/src/theme`: OKLCH palette engine; generates CSS variables for the web and Kotlin palettes for Android |
 | Auth | argon2id passwords, DB-backed session cookie, hashed named API tokens |
 | Live updates | Server-Sent Events from an in-process hub; every mutation publishes to the user's streams |
@@ -257,7 +257,7 @@ colour mode are per client (browser storage, Android settings), like filters.
   raw API calls with `--json` output for scripts; task references by alias,
   id or unique id prefix. `karotto mcp` exposes the same operations as MCP
   tools. `skills/karotto/SKILL.md` teaches agents the CLI.
-- **Home Assistant** (`custom_components/karotto`): to-do list entities for
+- **Home Assistant** ([separate repository](https://github.com/maxkueng/karotto-ha-integration)): to-do list entities for
   to-dos and today's dailies, count sensors, a rollover-pending binary sensor,
   and `karotto.score` / `run_rollover` / `add_task` actions. Live over SSE.
   See `docs/HOME_ASSISTANT.md`.

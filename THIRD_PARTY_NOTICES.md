@@ -72,6 +72,5 @@ values were used; karotto's theme engine derives its own ramps from them.
 ## Dependencies
 
 Runtime and build dependencies are declared in each package's manifest
-(`package.json`, `build.gradle.kts`, `manifest.json`) and carry their own
-licences, all of them GPL-compatible. The Home Assistant integration depends
-only on Home Assistant itself (Apache-2.0).
+(`package.json`, `build.gradle.kts`) and carry their own licences, all of
+them GPL-compatible.
