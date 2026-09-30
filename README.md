@@ -99,6 +99,17 @@ Install the signed APK from the latest
 updates. On first start enter your server URL, username and password; the app
 creates its own API token and never stores the password.
 
+Phones with Android's Advanced Protection mode on refuse to install APKs from
+anything but an app store, Obtainium included. Install over USB instead, which
+that mode does not block:
+
+```sh
+adb install -r karotto-<version>.apk
+```
+
+Every release is signed with the same key, so this updates in place and keeps
+you logged in.
+
 `packages/android` is a standalone Gradle project (not an npm workspace). It
 talks to the same API with a long-lived token created through
 `POST /api/v1/auth/token` from the login screen, caches tasks in Room, scores
