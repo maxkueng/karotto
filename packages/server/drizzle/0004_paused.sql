@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "paused" boolean DEFAULT false NOT NULL;

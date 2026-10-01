@@ -55,6 +55,7 @@ karotto score <task> up|down   # habits
 karotto check <task> <n|text>  # toggle checklist item by number or text
 karotto tags list|add|rename|rm
 karotto cron status|run [--done <task> ...]
+karotto pause | resume                      # vacation mode: no penalties while paused
 karotto events                 # JSON lines of live changes, runs until killed
 karotto api GET /tasks?type=completedTodos   # anything else
 ```

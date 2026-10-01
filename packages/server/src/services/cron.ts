@@ -92,11 +92,13 @@ export async function cronStatus(
     needsCron: true,
     daysMissed,
     yesterday,
-    yesterdailies: yesterdailies(
-      dailies,
-      now,
-      ctx,
-    ),
+    yesterdailies: user.paused
+      ? []
+      : yesterdailies(
+          dailies,
+          now,
+          ctx,
+        ),
   };
 }
 
@@ -192,6 +194,7 @@ export async function runCron(
       now,
       lastCron: fresh.lastCron,
       ctx,
+      paused: fresh.paused,
       habits: all.filter((task): task is Habit => task.type === 'habit'),
       dailies: all.filter((task): task is Daily => task.type === 'daily'),
       todos: all.filter((task): task is Todo => task.type === 'todo'),

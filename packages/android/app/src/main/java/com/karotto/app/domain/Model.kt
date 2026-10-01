@@ -213,6 +213,7 @@ data class Preferences(
     val timezone: String = "UTC",
     val dateFormat: String = "MM/dd/yyyy",
     val completedTodoRetentionDays: Int? = 30,
+    val paused: Boolean = false,
 )
 
 @Serializable

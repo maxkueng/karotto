@@ -142,6 +142,10 @@ export function registerAuth(parser: Argv<Globals>): Argv<Globals> {
                 user.preferences.timezone,
               ],
               [
+                'paused',
+                user.preferences.paused ? 'yes' : 'no',
+              ],
+              [
                 'day start',
                 `${String(user.preferences.dayStart).padStart(
                   2,

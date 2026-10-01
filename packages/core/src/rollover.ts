@@ -29,6 +29,8 @@ export type RolloverInput = {
   habits: Habit[];
   dailies: Daily[];
   todos: Todo[];
+  /** Vacation mode: the day still rolls, but nothing missed is penalised. */
+  paused?: boolean;
 };
 
 export type RolloverHistory = {
@@ -73,6 +75,7 @@ function rollDaily(
   today: IsoDate,
   yesterday: IsoDate,
   now: Date,
+  paused: boolean,
   history: RolloverHistory[],
 ): Daily {
   const isDueToday = shouldDo(
@@ -96,11 +99,13 @@ function rollDaily(
     isDue: isDueToday,
   };
   if (wasDueYesterday) {
-    next = resetChecklist({
-      ...next,
-      value: daily.value + missedDailyDelta(daily),
-      streak: 0,
-    });
+    next = resetChecklist(paused
+      ? next
+      : {
+          ...next,
+          value: daily.value + missedDailyDelta(daily),
+          streak: 0,
+        });
   }
   history.push({
     taskId: daily.id,
@@ -141,8 +146,11 @@ function rollHabit(
   };
 }
 
-function rollTodo(todo: Todo): Todo {
-  if (todo.completed) {
+function rollTodo(
+  todo: Todo,
+  paused: boolean,
+): Todo {
+  if (todo.completed || paused) {
     return todo;
   }
   return {
@@ -156,6 +164,7 @@ export function computeRollover(input: RolloverInput): RolloverResult | null {
     now,
     lastCron,
     ctx,
+    paused = false,
   } = input;
   const daysMissed = daysMissedSince(
     lastCron,
@@ -188,9 +197,13 @@ export function computeRollover(input: RolloverInput): RolloverResult | null {
       today,
       yesterday,
       now,
+      paused,
       history,
     )),
-    todos: input.todos.map(rollTodo),
+    todos: input.todos.map((todo) => rollTodo(
+      todo,
+      paused,
+    )),
     history,
   };
 }

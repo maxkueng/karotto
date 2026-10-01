@@ -12,6 +12,21 @@ export const Page = twc(
   ],
 );
 
+export const PausedBanner = twc(
+  Row,
+  [
+    'mb-3',
+    'items-center',
+    'gap-2',
+    'rounded-md',
+    'bg-well',
+    'px-4',
+    'py-2',
+    'text-sm',
+    'text-ink',
+  ],
+);
+
 export const Toolbar = twc(
   Row,
   [

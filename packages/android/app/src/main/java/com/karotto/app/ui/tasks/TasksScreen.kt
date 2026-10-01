@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.DropdownMenu
@@ -133,6 +134,7 @@ fun TasksScreen(
                 onClearCompleted = viewModel::clearCompleted,
             )
             if (state.offline) ConnectionBanner(state.pendingCount)
+            if (state.user?.preferences?.paused == true) PausedBanner()
             if (wide) {
                 Row(Modifier.weight(1f).padding(horizontal = 8.dp)) {
                     TaskType.entries.forEach { type ->
@@ -303,6 +305,26 @@ private fun TasksTopBar(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PausedBanner() {
+    val colors = KarottoTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.contentBackgroundOffset)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.Pause, contentDescription = null, tint = colors.textTitle, modifier = Modifier.size(18.dp))
+        Text(
+            text = "Paused. Missed dailies and to-dos are not penalised until you resume in Settings.",
+            fontSize = 14.sp,
+            color = colors.textTitle,
+            modifier = Modifier.padding(start = 10.dp),
+        )
     }
 }
 
