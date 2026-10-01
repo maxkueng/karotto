@@ -23,7 +23,7 @@ export const PausedBanner = twc(
     'px-4',
     'py-2',
     'text-sm',
-    'text-neutral-100',
+    'text-ink',
   ],
 );
 

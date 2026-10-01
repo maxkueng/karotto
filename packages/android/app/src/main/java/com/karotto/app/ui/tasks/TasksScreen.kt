@@ -314,15 +314,15 @@ private fun PausedBanner() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.offsetBackground)
+            .background(colors.contentBackgroundOffset)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.Pause, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+        Icon(Icons.Rounded.Pause, contentDescription = null, tint = colors.textTitle, modifier = Modifier.size(18.dp))
         Text(
             text = "Paused. Missed dailies and to-dos are not penalised until you resume in Settings.",
             fontSize = 14.sp,
-            color = colors.textSecondary,
+            color = colors.textTitle,
             modifier = Modifier.padding(start = 10.dp),
         )
     }
