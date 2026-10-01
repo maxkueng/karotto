@@ -56,6 +56,7 @@ export const preferencesSchema = z.object({
   timezone: timezoneSchema,
   dateFormat: dateFormatSchema,
   completedTodoRetentionDays: z.number().int().min(1).max(3650).nullable(),
+  paused: z.boolean(),
 });
 export type Preferences = z.infer<typeof preferencesSchema>;
 
@@ -64,6 +65,7 @@ export const preferencesUpdateSchema = z.object({
   timezone: timezoneSchema.optional(),
   dateFormat: dateFormatSchema.optional(),
   completedTodoRetentionDays: z.number().int().min(1).max(3650).nullable().optional(),
+  paused: z.boolean().optional(),
 });
 export type PreferencesUpdate = z.infer<typeof preferencesUpdateSchema>;
 

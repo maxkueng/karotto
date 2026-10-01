@@ -1,6 +1,7 @@
 import type {
   CronResult,
   CronStatus,
+  User,
 } from '@karotto/core';
 import type { Argv } from 'yargs';
 import {
@@ -85,5 +86,46 @@ export function registerCron(parser: Argv<Globals>): Argv<Globals> {
           },
         )
         .demandCommand(1),
+    )
+    .command(
+      'pause',
+      'Vacation mode: days still roll over, but missed dailies and to-dos are not penalised',
+      () => undefined,
+      async (argv) => setPaused(
+        argv,
+        true,
+      ),
+    )
+    .command(
+      'resume',
+      'Leave vacation mode',
+      () => undefined,
+      async (argv) => setPaused(
+        argv,
+        false,
+      ),
     );
+}
+
+async function setPaused(
+  argv: Globals,
+  paused: boolean,
+): Promise<void> {
+  const ctx = context(argv);
+  try {
+    const user = await ctx.api.patch<User>(
+      '/user/preferences',
+      { paused },
+    );
+    print(
+      ctx.output,
+      { paused: user.preferences.paused },
+      () => (user.preferences.paused ? 'Paused. Rollovers will not penalise anything until you resume.' : 'Resumed.'),
+    );
+  } catch (error) {
+    fail(
+      ctx.output,
+      error,
+    );
+  }
 }
