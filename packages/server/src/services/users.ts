@@ -37,6 +37,7 @@ export function preferencesOf(user: UserRow): Preferences {
     timezone: user.timezone,
     dateFormat: user.dateFormat as DateFormat,
     completedTodoRetentionDays: user.completedTodoRetentionDays,
+    paused: user.paused,
   };
 }
 
@@ -184,6 +185,9 @@ export async function updatePreferences(
   }
   if (patch.completedTodoRetentionDays !== undefined) {
     values.completedTodoRetentionDays = patch.completedTodoRetentionDays;
+  }
+  if (patch.paused !== undefined) {
+    values.paused = patch.paused;
   }
   if (patch.dayStart !== undefined && patch.dayStart !== user.dayStart) {
     values.dayStart = patch.dayStart;

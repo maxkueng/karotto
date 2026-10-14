@@ -4,6 +4,7 @@ import type {
   TaskCreateInput,
   TaskType,
 } from '@karotto/core';
+import Pause from 'lucide-solid/icons/pause';
 import SlidersHorizontal from 'lucide-solid/icons/sliders-horizontal';
 import {
   createEffect,
@@ -30,6 +31,7 @@ import {
   CreateArea,
   CreateAreaMobile,
   Page,
+  PausedBanner,
   SearchArea,
   TagsButtonSlot,
   Toolbar,
@@ -212,6 +214,12 @@ export function TasksPage() {
 
   return (
     <Page>
+      <Show when={session.user()?.preferences.paused}>
+        <PausedBanner>
+          <Pause size={16} />
+          <span>Paused. Missed Dailies and To Do's are not penalised until you resume in Settings.</span>
+        </PausedBanner>
+      </Show>
       <Toolbar
         gap="sm"
         justify="center"

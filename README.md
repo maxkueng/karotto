@@ -187,6 +187,7 @@ karotto tasks list --due
 karotto tasks add todo "Buy carrots" --due 2026-10-03 --tag errands --alias carrots
 karotto done carrots
 karotto cron status --json
+karotto pause                   # vacation mode: no penalties until `karotto resume`
 ```
 
 Every command takes `--json`. `KAROTTO_URL` and `KAROTTO_TOKEN` override the

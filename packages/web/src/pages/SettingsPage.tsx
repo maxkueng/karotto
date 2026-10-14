@@ -16,6 +16,7 @@ import {
 } from 'solid-js';
 import { userApi } from '@/api';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
 import {
   Input,
   Label,
@@ -268,6 +269,22 @@ export function SettingsPage() {
               </Button>
             </Show>
           </Text>
+        </Spacer>
+      </Card>
+
+      <Card>
+        <Heading level="section">Vacation</Heading>
+        <Spacer top="md">
+          <Text tone="help">
+            While paused, days still roll over as usual, but missed Dailies keep their streak and value and To Do's do not decay. Dailies you tick still count.
+          </Text>
+        </Spacer>
+        <Spacer top="md">
+          <Checkbox
+            checked={prefs()?.paused ?? false}
+            label="Pause"
+            onChange={(checked) => update({ paused: checked })}
+          />
         </Spacer>
       </Card>
 

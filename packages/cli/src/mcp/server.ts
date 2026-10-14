@@ -1,4 +1,5 @@
 import type {
+  User,
   CronResult,
   CronStatus,
   ScoreResult,
@@ -530,6 +531,22 @@ export function buildMcpServer(api: ApiClient): McpServer {
         ran: result.ran,
         daysMissed: result.daysMissed,
       };
+    }),
+  );
+
+  server.registerTool(
+    'set_paused',
+    {
+      title: 'Pause or resume (vacation mode)',
+      description: 'While paused, days still roll over but missed dailies keep their streak and value and to-dos do not decay.',
+      inputSchema: { paused: z.boolean() },
+    },
+    async (input) => guarded(async () => {
+      const user = await api.patch<User>(
+        '/user/preferences',
+        { paused: input.paused },
+      );
+      return { paused: user.preferences.paused };
     }),
   );
 

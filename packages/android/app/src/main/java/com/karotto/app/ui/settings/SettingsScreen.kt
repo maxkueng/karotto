@@ -119,6 +119,15 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit, onSignedOut: () 
                 options = dateFormats.map { it to it },
             ) { patch("dateFormat", it) }
 
+            SectionCaption("Vacation", Modifier.padding(top = 24.dp, bottom = 4.dp))
+            SwitchRow("Pause", user?.preferences?.paused == true) { on -> patch("paused", on) }
+            Text(
+                "Days still roll over, but missed dailies keep their streak and value and to-dos do not decay.",
+                fontSize = 13.sp,
+                color = colors.textSecondary,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+
             SectionCaption("App", Modifier.padding(top = 24.dp, bottom = 4.dp))
             ChoiceRow(
                 label = "Theme",

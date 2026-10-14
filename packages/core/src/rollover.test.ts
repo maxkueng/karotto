@@ -145,6 +145,42 @@ describe(
     );
 
     it(
+      'keeps values and streaks while paused but still resets the day',
+      () => {
+        const result = run({
+          paused: true,
+          dailies: [
+            daily({
+              streak: 12,
+              checklist: [
+                {
+                  id: 'c',
+                  text: 'x',
+                  completed: true,
+                },
+              ],
+            }),
+            daily({
+              id: 'done',
+              completed: true,
+              streak: 3,
+            }),
+          ],
+          todos: [todo()],
+        });
+        const missed = result?.dailies[0];
+        expect(missed?.value).toBe(0);
+        expect(missed?.streak).toBe(12);
+        expect(missed?.completed).toBe(false);
+        expect(missed?.checklist[0]?.completed).toBe(false);
+        expect(result?.dailies[1]?.completed).toBe(false);
+        expect(result?.dailies[1]?.streak).toBe(3);
+        expect(result?.todos[0]?.value).toBe(0);
+        expect(result?.history).toHaveLength(1);
+      },
+    );
+
+    it(
       'scales the penalty by checklist completion and resets the checklist',
       () => {
         const result = run({

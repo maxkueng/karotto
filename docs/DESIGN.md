@@ -143,6 +143,14 @@ For each task, in a transaction:
   month differs), one-sided value decay
 - completed to-dos older than the retention window are deleted
 
+**Pause (vacation mode)** is Habitica's "rest in the Inn" without the inn:
+`preferences.paused`. The rollover still runs every day and still unchecks
+dailies, resets checklists, rolls habit counters and writes history, but a
+missed due daily keeps its value and streak and open to-dos do not decay.
+`GET /cron/status` reports no yesterdailies while paused, so clients run the
+rollover silently instead of asking. Dailies ticked while paused count as
+usual.
+
 The trigger is the same as Habitica's: rollover runs when a client asks
 (`POST /api/v1/cron`), never on its own, because the "Welcome back" modal has
 to let the user tick what they did yesterday before penalties apply. `GET
@@ -161,7 +169,7 @@ Postgres, UUID primary keys, `timestamptz` for instants, `date` for calendar
 dates. Tables:
 
 - `users`: username, password hash, preferences (`day_start`, `timezone`,
-  `date_format`, `completed_todo_retention_days`), `last_cron`. Filter state
+  `date_format`, `completed_todo_retention_days`, `paused`), `last_cron`. Filter state
   is not stored server-side.
 - `sessions`: hashed token, user, expiry, last seen
 - `api_tokens`: hashed token, prefix for display, name, last used, optional expiry

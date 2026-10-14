@@ -56,6 +56,7 @@ export const users = pgTable(
     timezone: text('timezone').notNull().default('UTC'),
     dateFormat: text('date_format').notNull().default('MM/dd/yyyy'),
     completedTodoRetentionDays: integer('completed_todo_retention_days').default(30),
+    paused: boolean('paused').notNull().default(false),
     ...timestamps,
   },
   (table) => [uniqueIndex('users_username_lower_idx').on(sql`lower(${table.username})`)],
