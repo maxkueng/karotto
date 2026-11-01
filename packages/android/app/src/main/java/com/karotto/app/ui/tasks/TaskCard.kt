@@ -243,22 +243,27 @@ private fun IconRow(task: Task, ctx: DayContext, dateFormat: String) {
     val lastScored = (task as? Habit)?.takeIf { it.lastScoredAt != null }
     if (streak == null && due == null && lastScored == null && task.reminders.isEmpty()) return
     Row(
-        modifier = Modifier.padding(top = 2.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (due != null) {
-            SmallIcon(Icons.Rounded.CalendarToday)
-            Caption(due.first, due.second, Modifier.padding(start = 2.dp, end = 12.dp))
+        if (due != null) IconCaption(Icons.Rounded.CalendarToday, due.first, due.second)
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (lastScored != null) LastScored(lastScored)
+            if (streak != null) IconCaption(Icons.Rounded.LocalFireDepartment, streak, colors.textTernary)
+            if (task.reminders.isNotEmpty()) IconCaption(Icons.Rounded.Alarm, reminder, colors.textTernary)
         }
-        if (lastScored != null) LastScored(lastScored)
-        if (streak != null) {
-            SmallIcon(Icons.Rounded.LocalFireDepartment)
-            Caption(streak, colors.textTernary, Modifier.padding(start = 2.dp, end = 12.dp))
-        }
-        if (task.reminders.isNotEmpty()) {
-            SmallIcon(Icons.Rounded.Alarm)
-            if (reminder != null) Caption(reminder, colors.textTernary, Modifier.padding(start = 2.dp))
-        }
+    }
+}
+
+@Composable
+private fun IconCaption(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String?, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        SmallIcon(icon)
+        if (text != null) Caption(text, color, Modifier.padding(start = 2.dp))
     }
 }
 
@@ -284,8 +289,7 @@ private fun LastScored(habit: Habit) {
         habit.lastScoredDirection == Direction.UP -> "+ "
         else -> "- "
     }
-    SmallIcon(Icons.Rounded.History)
-    Caption(sign + Dates.timeAgo(at, rememberNow()), KarottoTheme.colors.textTernary, Modifier.padding(start = 2.dp, end = 12.dp))
+    IconCaption(Icons.Rounded.History, sign + Dates.timeAgo(at, rememberNow()), KarottoTheme.colors.textTernary)
 }
 
 @Composable
