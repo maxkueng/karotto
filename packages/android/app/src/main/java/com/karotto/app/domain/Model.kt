@@ -16,7 +16,11 @@ enum class TaskType(val apiName: String) {
 
 enum class Direction(val apiName: String) {
     UP("up"),
-    DOWN("down"),
+    DOWN("down");
+
+    companion object {
+        fun fromApi(name: String): Direction? = entries.firstOrNull { it.apiName == name }
+    }
 }
 
 enum class DailyFrequency(val apiName: String) {
@@ -129,6 +133,8 @@ data class Habit(
     val counterUp: Int,
     val counterDown: Int,
     val frequency: HabitFrequency,
+    val lastScoredAt: String? = null,
+    val lastScoredDirection: Direction? = null,
 ) : Task {
     override val type: TaskType get() = TaskType.HABIT
 }

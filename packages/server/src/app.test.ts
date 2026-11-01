@@ -352,6 +352,43 @@ describe(
     );
 
     it(
+      'tracks the last score separately from task edits',
+      async () => {
+        const { body: created } = await call(
+          'POST',
+          '/tasks',
+          {
+            type: 'habit',
+            text: 'Sleep',
+          },
+        );
+        const id = (created as Json).id as string;
+        expect((created as Json).lastScoredAt).toBeNull();
+
+        const { body } = await call(
+          'POST',
+          `/tasks/${id}/score/down`,
+          { scoredAt: '2026-09-28T08:30:00Z' },
+        );
+        const scored = body?.task as Json;
+        expect(scored.lastScoredAt).toBe('2026-09-28T08:30:00.000Z');
+        expect(scored.lastScoredDirection).toBe('down');
+
+        const { body: edited } = await call(
+          'PATCH',
+          `/tasks/${id}`,
+          { text: 'Sleep more' },
+        );
+        expect((edited as Json).lastScoredAt).toBe('2026-09-28T08:30:00.000Z');
+
+        await call(
+          'DELETE',
+          `/tasks/${id}`,
+        );
+      },
+    );
+
+    it(
       'refuses scoring a disabled habit direction',
       async () => {
         await call(

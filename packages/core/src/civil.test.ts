@@ -10,6 +10,7 @@ import {
   isoWeek,
   monthsDiff,
   parseIsoDate,
+  timeAgo,
   weekday,
 } from '@karotto/core/civil';
 
@@ -93,6 +94,40 @@ describe(
           year: 2026,
           week: 40,
         });
+      },
+    );
+
+    it.each([
+      [
+        '2026-10-31T11:59:30Z',
+        'just now',
+      ],
+      [
+        '2026-10-31T12:00:30Z',
+        'just now',
+      ],
+      [
+        '2026-10-31T11:55:00Z',
+        '5m ago',
+      ],
+      [
+        '2026-10-31T09:00:00Z',
+        '3h ago',
+      ],
+      [
+        '2026-10-30T12:00:00Z',
+        '1d ago',
+      ],
+    ])(
+      'describes %s as %s',
+      (
+        iso,
+        expected,
+      ) => {
+        expect(timeAgo(
+          iso,
+          new Date('2026-10-31T12:00:00Z'),
+        )).toBe(expected);
       },
     );
   },

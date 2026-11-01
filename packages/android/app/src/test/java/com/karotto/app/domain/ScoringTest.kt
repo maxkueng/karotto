@@ -28,11 +28,19 @@ class ScoringTest {
         var task = Habit("h", "t", "", null, 0.0, emptyList(), emptyList(), 0, "", "", true, true, 0, 0, HabitFrequency.DAILY)
         val values = mutableListOf<Double>()
         repeat(10) {
-            task = Scoring.scoreHabit(task, Direction.UP)
+            task = Scoring.scoreHabit(task, Direction.UP, java.time.Instant.EPOCH)
             values += Math.round(task.value * 10000) / 10000.0
         }
         assertEquals(listOf(1.0, 1.9747, 2.9254, 3.8531, 4.7591, 5.6443, 6.5096, 7.356, 8.1842, 8.995), values)
         assertEquals(10, task.counterUp)
+    }
+
+    @Test
+    fun habitRemembersLastScore() {
+        val task = Habit("h", "t", "", null, 0.0, emptyList(), emptyList(), 0, "", "", true, true, 0, 0, HabitFrequency.DAILY)
+        val scored = Scoring.scoreHabit(task, Direction.DOWN, java.time.Instant.parse("2026-10-31T07:12:00Z"))
+        assertEquals("2026-10-31T07:12:00Z", scored.lastScoredAt)
+        assertEquals(Direction.DOWN, scored.lastScoredDirection)
     }
 
     @Test

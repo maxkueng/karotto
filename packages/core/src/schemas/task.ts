@@ -126,6 +126,8 @@ export const habitSchema = taskBaseSchema.extend({
   counterUp: z.number().int(),
   counterDown: z.number().int(),
   frequency: habitFrequencySchema,
+  lastScoredAt: isoDateTimeSchema.nullable(),
+  lastScoredDirection: scoreDirectionSchema.nullable(),
 });
 export type Habit = z.infer<typeof habitSchema>;
 

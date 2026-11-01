@@ -803,6 +803,7 @@ async function scoreOne(
   row: TaskRow,
   direction: ScoreDirection,
   now: Date,
+  scoredAt: Date,
 ): Promise<ScoreResult> {
   const ctx = dayContext(user);
   assertScorable(
@@ -832,6 +833,7 @@ async function scoreOne(
         task: current,
         direction,
         now,
+        scoredAt,
         ctx,
         lastEntry: last ? serializeHistory(last) : null,
       });
@@ -840,6 +842,8 @@ async function scoreOne(
         value: outcome.task.value,
         counterUp: outcome.task.counterUp,
         counterDown: outcome.task.counterDown,
+        lastScoredAt: outcome.task.lastScoredAt ? new Date(outcome.task.lastScoredAt) : null,
+        lastScoredDirection: outcome.task.lastScoredDirection,
       };
       if (outcome.history) {
         await applyHistoryOp(
@@ -942,6 +946,7 @@ export async function scoreTasks(
         row,
         request.direction,
         now,
+        request.scoredAt ? new Date(request.scoredAt) : now,
       ));
     }
     return results;

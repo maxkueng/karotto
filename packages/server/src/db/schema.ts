@@ -175,6 +175,11 @@ export const tasks = pgTable(
     down: boolean('down').notNull().default(true),
     counterUp: integer('counter_up').notNull().default(0),
     counterDown: integer('counter_down').notNull().default(0),
+    lastScoredAt: timestamp(
+      'last_scored_at',
+      { withTimezone: true },
+    ),
+    lastScoredDirection: text('last_scored_direction'),
     frequency: text('frequency').notNull().default('daily'),
     everyX: integer('every_x').notNull().default(1),
     startDate: date(

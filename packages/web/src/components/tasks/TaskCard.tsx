@@ -1,6 +1,11 @@
-import type { Task } from '@karotto/core';
+import { timeAgo } from '@karotto/core';
+import type {
+  Habit,
+  Task,
+} from '@karotto/core';
 import ArrowDownToLine from 'lucide-solid/icons/arrow-down-to-line';
 import ArrowUpToLine from 'lucide-solid/icons/arrow-up-to-line';
+import Clock from 'lucide-solid/icons/clock';
 import EllipsisVertical from 'lucide-solid/icons/ellipsis-vertical';
 import ListChecks from 'lucide-solid/icons/list-checks';
 import Minus from 'lucide-solid/icons/minus';
@@ -9,7 +14,9 @@ import Plus from 'lucide-solid/icons/plus';
 import Trash from 'lucide-solid/icons/trash';
 import {
   createMemo,
+  createSignal,
   For,
+  onCleanup,
   Show,
 } from 'solid-js';
 import { Markdown } from '@/components/tasks/Markdown';
@@ -93,11 +100,46 @@ function habitCounterText(task: Task): string | null {
   return String(task.up ? task.counterUp : task.counterDown);
 }
 
+function lastScoredSign(habit: Habit): string {
+  if (!habit.up || !habit.down) {
+    return '';
+  }
+  return habit.lastScoredDirection === 'up' ? '+ ' : '- ';
+}
+
+function LastScored(props: { habit: Habit;
+  at: string; }) {
+  const [
+    now,
+    setNow,
+  ] = createSignal(new Date());
+  const timer = setInterval(
+    () => setNow(new Date()),
+    60_000,
+  );
+  onCleanup(() => clearInterval(timer));
+
+  return (
+    <Tooltip text={`Last scored ${new Date(props.at).toLocaleString()}`}>
+      <Row gap="xs">
+        <Clock size={12} />
+        <span>
+          {`${lastScoredSign(props.habit)}${timeAgo(
+            props.at,
+            now(),
+          )}`}
+        </span>
+      </Row>
+    </Tooltip>
+  );
+}
+
 export function TaskCard(props: TaskCardProps) {
   const session = useSession();
   const tags = useTags();
 
   const palette = createMemo(() => paletteFor(props.task));
+  const habit = () => (props.task.type === 'habit' ? props.task : null);
   const completed = () => props.task.type !== 'habit' && props.task.completed;
   const dimmed = () => {
     const task = props.task;
@@ -370,6 +412,14 @@ export function TaskCard(props: TaskCardProps) {
                       <span>{props.task.type === 'daily' ? props.task.streak : 0}</span>
                     </Row>
                   </Tooltip>
+                </Show>
+                <Show when={habit()?.lastScoredAt}>
+                  {(at) => (
+                    <LastScored
+                      habit={habit() as Habit}
+                      at={at()}
+                    />
+                  )}
                 </Show>
                 <Show when={habitCounterText(props.task)}>
                   {(text) => (

@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { uuidSchema } from '@karotto/core/schemas/common';
+import {
+  isoDateTimeSchema,
+  uuidSchema,
+} from '@karotto/core/schemas/common';
 import {
   scoreDirectionSchema,
   taskSchema,
@@ -17,8 +20,11 @@ export const uuidParamsSchema = z.object({ id: uuidSchema });
 export const scoreRequestSchema = z.object({
   id: taskIdentifierSchema,
   direction: scoreDirectionSchema,
+  scoredAt: isoDateTimeSchema.optional(),
 });
 export type ScoreRequest = z.infer<typeof scoreRequestSchema>;
+
+export const scoreBodySchema = z.object({ scoredAt: isoDateTimeSchema.optional() });
 
 export const taskListQuerySchema = z.object({
   type: z.enum([

@@ -3,6 +3,7 @@ package com.karotto.app.data.api
 import com.karotto.app.domain.ChecklistItem
 import com.karotto.app.domain.Daily
 import com.karotto.app.domain.DailyFrequency
+import com.karotto.app.domain.Direction
 import com.karotto.app.domain.Habit
 import com.karotto.app.domain.HabitFrequency
 import com.karotto.app.domain.Reminder
@@ -35,6 +36,8 @@ data class TaskDto(
     val counterUp: Int? = null,
     val counterDown: Int? = null,
     val frequency: String? = null,
+    val lastScoredAt: String? = null,
+    val lastScoredDirection: String? = null,
     val completed: Boolean? = null,
     val collapseChecklist: Boolean? = null,
     val checklist: List<ChecklistItem>? = null,
@@ -57,6 +60,8 @@ data class TaskDto(
             counterUp = counterUp ?: 0,
             counterDown = counterDown ?: 0,
             frequency = HabitFrequency.fromApi(frequency ?: "daily"),
+            lastScoredAt = lastScoredAt,
+            lastScoredDirection = lastScoredDirection?.let(Direction::fromApi),
         )
 
         TaskType.DAILY -> Daily(
@@ -92,6 +97,7 @@ data class TaskDto(
                 task.position, task.createdAt, task.updatedAt,
                 up = task.up, down = task.down, counterUp = task.counterUp, counterDown = task.counterDown,
                 frequency = task.frequency.apiName,
+                lastScoredAt = task.lastScoredAt, lastScoredDirection = task.lastScoredDirection?.apiName,
             )
 
             is Daily -> TaskDto(

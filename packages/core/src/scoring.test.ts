@@ -43,6 +43,8 @@ function habit(value = 0): Habit {
     down: true,
     counterUp: 0,
     counterDown: 0,
+    lastScoredAt: null,
+    lastScoredDirection: null,
     frequency: 'daily',
   };
 }
@@ -254,6 +256,67 @@ describe(
           4.7591,
           3,
         );
+      },
+    );
+
+    it(
+      'remembers when and which way it was last scored',
+      () => {
+        const { task } = scoreHabit({
+          task: habit(),
+          direction: 'down',
+          now,
+          ctx,
+          lastEntry: null,
+        });
+        expect(task.lastScoredAt).toBe(now.toISOString());
+        expect(task.lastScoredDirection).toBe('down');
+      },
+    );
+
+    it(
+      'uses a client scoredAt, capped at now',
+      () => {
+        const earlier = new Date('2026-09-28T07:00:00Z');
+        const replayed = scoreHabit({
+          task: habit(),
+          direction: 'up',
+          now,
+          scoredAt: earlier,
+          ctx,
+          lastEntry: null,
+        });
+        expect(replayed.task.lastScoredAt).toBe(earlier.toISOString());
+        const future = scoreHabit({
+          task: habit(),
+          direction: 'up',
+          now,
+          scoredAt: new Date('2026-09-28T12:00:00Z'),
+          ctx,
+          lastEntry: null,
+        });
+        expect(future.task.lastScoredAt).toBe(now.toISOString());
+      },
+    );
+
+    it(
+      'keeps a newer last score when an older one is replayed',
+      () => {
+        const { task } = scoreHabit({
+          task: {
+            ...habit(),
+            lastScoredAt: '2026-09-28T09:00:00.000Z',
+            lastScoredDirection: 'up',
+          },
+          direction: 'down',
+          now,
+          scoredAt: new Date('2026-09-28T07:00:00Z'),
+          ctx,
+          lastEntry: null,
+        });
+        expect(task.lastScoredAt).toBe('2026-09-28T09:00:00.000Z');
+        expect(task.lastScoredDirection).toBe('up');
+        expect(task.counterDown).toBe(1);
       },
     );
 

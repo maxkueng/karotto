@@ -22,11 +22,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -37,6 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.karotto.app.domain.Checklisted
 import com.karotto.app.domain.Daily
 import com.karotto.app.domain.DayContext
@@ -50,6 +56,7 @@ import com.karotto.app.ui.common.MarkdownText
 import com.karotto.app.ui.common.TaskCheckbox
 import com.karotto.app.ui.theme.KarottoTheme
 import com.karotto.app.ui.theme.ValueRamp
+import kotlinx.coroutines.delay
 import java.time.Instant
 
 private val cardShape = RoundedCornerShape(8.dp)
@@ -233,7 +240,8 @@ private fun IconRow(task: Task, ctx: DayContext, dateFormat: String) {
         val first = times.firstOrNull() ?: return@let null
         Dates.formatTime(first.toLocalTime()) + if (times.size > 1) " (+${times.size - 1})" else ""
     }
-    if (streak == null && due == null && task.reminders.isEmpty()) return
+    val lastScored = (task as? Habit)?.takeIf { it.lastScoredAt != null }
+    if (streak == null && due == null && lastScored == null && task.reminders.isEmpty()) return
     Row(
         modifier = Modifier.padding(top = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -242,6 +250,7 @@ private fun IconRow(task: Task, ctx: DayContext, dateFormat: String) {
             SmallIcon(Icons.Rounded.CalendarToday)
             Caption(due.first, due.second, Modifier.padding(start = 2.dp, end = 12.dp))
         }
+        if (lastScored != null) LastScored(lastScored)
         if (streak != null) {
             SmallIcon(Icons.Rounded.LocalFireDepartment)
             Caption(streak, colors.textTernary, Modifier.padding(start = 2.dp, end = 12.dp))
@@ -251,6 +260,32 @@ private fun IconRow(task: Task, ctx: DayContext, dateFormat: String) {
             if (reminder != null) Caption(reminder, colors.textTernary, Modifier.padding(start = 2.dp))
         }
     }
+}
+
+@Composable
+private fun rememberNow(): Instant {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val now by produceState(Instant.now(), lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                value = Instant.now()
+                delay(60_000)
+            }
+        }
+    }
+    return now
+}
+
+@Composable
+private fun LastScored(habit: Habit) {
+    val at = habit.lastScoredAt?.let(Instant::parse) ?: return
+    val sign = when {
+        !habit.up || !habit.down -> ""
+        habit.lastScoredDirection == Direction.UP -> "+ "
+        else -> "- "
+    }
+    SmallIcon(Icons.Rounded.History)
+    Caption(sign + Dates.timeAgo(at, rememberNow()), KarottoTheme.colors.textTernary, Modifier.padding(start = 2.dp, end = 12.dp))
 }
 
 @Composable
