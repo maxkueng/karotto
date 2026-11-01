@@ -41,7 +41,7 @@ object Scoring {
         else -> TaskColor.BEST
     }
 
-    fun scoreHabit(task: Habit, direction: Direction, times: Int = 1): Habit {
+    fun scoreHabit(task: Habit, direction: Direction, now: Instant, times: Int = 1): Habit {
         var value = task.value
         repeat(times) {
             value += if (direction == Direction.DOWN) reverseDelta(value) else forwardDelta(value, direction)
@@ -50,6 +50,8 @@ object Scoring {
             value = value,
             counterUp = task.counterUp + if (direction == Direction.UP) times else 0,
             counterDown = task.counterDown + if (direction == Direction.DOWN) times else 0,
+            lastScoredAt = now.toString(),
+            lastScoredDirection = direction,
         )
     }
 

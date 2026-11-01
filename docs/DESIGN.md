@@ -182,6 +182,12 @@ dates. Tables:
 - `task_history`: one row per entry; habits get one row per CDS day updated in
   place, dailies one row per check and per rollover
 
+Habits keep `last_scored_at` and `last_scored_direction` on the task for the
+"3h ago" hint on the card. `updated_at` moves on edits and rollover, and
+`task_history` loses the direction once a day has both. Android replays queued
+scores with the time of the tap as `scoredAt`; it only feeds this hint, and an
+older replay never overwrites a newer score.
+
 Task order is an integer `position` per type, renumbered on move with a single
 `UPDATE ... FROM unnest(...) WITH ORDINALITY`. New tasks go to the top.
 Completed to-dos are not part of the order.

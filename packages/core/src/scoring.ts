@@ -84,9 +84,27 @@ export type HabitScoreInput = {
   direction: ScoreDirection;
   times?: number;
   now: Date;
+  scoredAt?: Date;
   ctx: DayContext;
   lastEntry: HistoryEntry | null;
 };
+
+function lastScore(
+  task: Habit,
+  direction: ScoreDirection,
+  scoredAt: Date,
+): Pick<Habit, 'lastScoredAt' | 'lastScoredDirection'> {
+  if (task.lastScoredAt !== null && new Date(task.lastScoredAt) > scoredAt) {
+    return {
+      lastScoredAt: task.lastScoredAt,
+      lastScoredDirection: task.lastScoredDirection,
+    };
+  }
+  return {
+    lastScoredAt: scoredAt.toISOString(),
+    lastScoredDirection: direction,
+  };
+}
 
 export function scoreHabit(input: HabitScoreInput): ScoreOutcome<Habit> {
   const {
@@ -97,6 +115,7 @@ export function scoreHabit(input: HabitScoreInput): ScoreOutcome<Habit> {
     lastEntry,
   } = input;
   const times = input.times ?? 1;
+  const scoredAt = input.scoredAt && input.scoredAt < now ? input.scoredAt : now;
   let value = task.value;
   let delta = 0;
   for (let i = 0; i < times; i += 1) {
@@ -132,6 +151,11 @@ export function scoreHabit(input: HabitScoreInput): ScoreOutcome<Habit> {
       value,
       counterUp: task.counterUp + (direction === 'up' ? times : 0),
       counterDown: task.counterDown + (direction === 'down' ? times : 0),
+      ...lastScore(
+        task,
+        direction,
+        scoredAt,
+      ),
     },
     delta,
     history: {

@@ -1,5 +1,6 @@
 package com.karotto.app.ui.common
 
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -20,6 +21,16 @@ object Dates {
 
     fun formatDateTime(at: ZonedDateTime): String =
         at.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT))
+
+    fun timeAgo(at: Instant, now: Instant): String {
+        val elapsed = Duration.between(at, now)
+        return when {
+            elapsed.toMinutes() < 1 -> "just now"
+            elapsed.toHours() < 1 -> "${elapsed.toMinutes()}m ago"
+            elapsed.toDays() < 1 -> "${elapsed.toHours()}h ago"
+            else -> "${elapsed.toDays()}d ago"
+        }
+    }
 
     fun parseReminder(time: String, zone: ZoneId): ZonedDateTime? =
         runCatching { ZonedDateTime.parse(time).withZoneSameInstant(zone) }

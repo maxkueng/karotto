@@ -21,6 +21,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 private const val CLIENT_ID_HEADER = "X-Client-Id"
@@ -128,7 +129,11 @@ class ApiClient(
         post("/tasks", kotlinx.serialization.json.JsonArray(bodies), ListSerializer(TaskDto.serializer()))
     suspend fun updateTask(id: String, patch: JsonObject): TaskDto = patch("/tasks/$id", patch, TaskDto.serializer())
     suspend fun deleteTask(id: String) = delete("/tasks/$id")
-    suspend fun score(id: String, direction: String): ScoreResultDto = post("/tasks/$id/score/$direction", null, ScoreResultDto.serializer())
+    suspend fun score(id: String, direction: String, scoredAt: Instant): ScoreResultDto = post(
+        "/tasks/$id/score/$direction",
+        buildJsonObject { put("scoredAt", scoredAt.toString()) },
+        ScoreResultDto.serializer(),
+    )
     suspend fun bulkScore(scores: List<ScoreRequest>): BulkScoreResultDto = post(
         "/tasks/score",
         buildJsonObject { put("scores", json.encodeToJsonElement(ListSerializer(ScoreRequest.serializer()), scores)) },

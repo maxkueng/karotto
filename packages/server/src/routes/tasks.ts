@@ -6,6 +6,7 @@ import {
   historyEntrySchema,
   movePositionSchema,
   okSchema,
+  scoreBodySchema,
   scoreDirectionSchema,
   scoreResultSchema,
   taskCreateSchema,
@@ -348,12 +349,13 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
     {
       schema: {
         summary: 'Score a task up or down',
-        description: 'Habits count a click; dailies and to-dos toggle completion (`up` completes, `down` un-completes). Returns the updated task and the value delta.',
+        description: 'Habits count a click; dailies and to-dos toggle completion (`up` completes, `down` un-completes). Returns the updated task and the value delta. Offline clients pass `scoredAt` to record when a habit was really scored; it only affects `lastScoredAt`.',
         tags: ['tasks'],
         params: z.object({
           id: taskIdentifierSchema,
           direction: scoreDirectionSchema,
         }),
+        body: scoreBodySchema.nullish(),
         response: { 200: scoreResultSchema },
       },
     },
@@ -365,6 +367,7 @@ export const taskRoutes: FastifyPluginAsyncZod<AppContext> = async (
           {
             id: request.params.id,
             direction: request.params.direction,
+            scoredAt: request.body?.scoredAt,
           },
         ],
         ctx.clock(),

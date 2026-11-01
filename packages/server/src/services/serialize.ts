@@ -8,6 +8,7 @@ import type {
   Habit,
   HabitFrequency,
   HistoryEntry,
+  ScoreDirection,
   Task,
   Todo,
 } from '@karotto/core';
@@ -53,6 +54,8 @@ export function serializeTask(
         counterUp: row.counterUp,
         counterDown: row.counterDown,
         frequency: row.frequency as HabitFrequency,
+        lastScoredAt: row.lastScoredAt?.toISOString() ?? null,
+        lastScoredDirection: row.lastScoredDirection as ScoreDirection | null,
       };
       return habit;
     }

@@ -127,7 +127,7 @@ class TaskRepository(
         val task = find(id) ?: return
         val now = Instant.now()
         val scored: Task = when (task) {
-            is Habit -> Scoring.scoreHabit(task, direction)
+            is Habit -> Scoring.scoreHabit(task, direction, now)
             is Daily -> Scoring.scoreDaily(task, direction)
             is Todo -> Scoring.scoreTodo(task, direction, now)
         }
@@ -141,7 +141,7 @@ class TaskRepository(
         val pending = db.pendingScores().all()
         for (op in pending) {
             try {
-                val result = api.score(op.taskId, op.direction)
+                val result = api.score(op.taskId, op.direction, Instant.ofEpochMilli(op.createdAt))
                 save(result.task)
             } catch (error: NetworkException) {
                 return false

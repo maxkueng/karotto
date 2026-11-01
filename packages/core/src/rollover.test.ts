@@ -33,6 +33,8 @@ function habit(overrides: Partial<Habit> = {}): Habit {
     counterUp: 3,
     counterDown: 1,
     frequency: 'daily',
+    lastScoredAt: null,
+    lastScoredDirection: null,
     ...overrides,
   };
 }
