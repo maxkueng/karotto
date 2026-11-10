@@ -23,7 +23,7 @@ export const eventRoutes: FastifyPluginAsyncZod<AppContext> = async (
 
   const streams = new Set<() => void>();
   app.addHook(
-    'onClose',
+    'preClose',
     async () => {
       streams.forEach((end) => end());
     },

@@ -1087,5 +1087,52 @@ describe(
         await reader.cancel().catch(() => undefined);
       },
     );
+
+    it(
+      'ends open streams so the server can shut down',
+      async () => {
+        const server = await buildApp({
+          db: handle.db,
+          clock: () => now,
+          config: loadConfig({
+            NODE_ENV: 'test',
+            DATABASE_URL: 'unused',
+            LOG_LEVEL: 'silent',
+          }),
+          events: new EventHub(),
+        });
+        const address = await server.listen({
+          host: '127.0.0.1',
+          port: 0,
+        });
+        const login = await server.inject({
+          method: 'POST',
+          url: `${API_PREFIX}/auth/token`,
+          headers: { 'content-type': 'application/json' },
+          payload: JSON.stringify({
+            username: 'max',
+            password: 'correct horse battery',
+            name: 'shutdown test',
+          }),
+        });
+        const { token } = JSON.parse(login.body) as { token: string };
+        const response = await fetch(
+          `${address}/api/v1/events`,
+          { headers: { authorization: `Bearer ${token}` } },
+        );
+        const reader = response.body!.getReader();
+        await reader.read();
+
+        const closed = await Promise.race([
+          server.close().then(() => true),
+          new Promise<false>((resolve) => setTimeout(
+            () => resolve(false),
+            2_000,
+          )),
+        ]);
+        expect(closed).toBe(true);
+        await reader.cancel().catch(() => undefined);
+      },
+    );
   },
 );
