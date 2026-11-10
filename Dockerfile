@@ -47,7 +47,7 @@ COPY --from=build /app/packages/server/drizzle ./packages/server/drizzle
 COPY --from=build /app/packages/cli/package.json ./packages/cli/package.json
 COPY --from=build /app/packages/cli/dist ./packages/cli/dist
 COPY --from=build /app/packages/web/dist ./web
-COPY deploy/docker/karotto-admin deploy/docker/karotto /usr/local/bin/
+COPY docker/karotto-admin docker/karotto /usr/local/bin/
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/api/v1/health').then((r)=>process.exit(r.ok?0:1),()=>process.exit(1))"
 EXPOSE 3000

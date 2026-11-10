@@ -1,6 +1,6 @@
 {
   "name": "@karotto/web",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "description": "karotto web client",
   "type": "module",
   "private": true,

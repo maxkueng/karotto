@@ -1,107 +1,112 @@
 # Deploying karotto
 
-One Linux box, Postgres on the same machine, the app as a systemd service.
-The whole thing is `deploy/install.sh`; everything below explains what it
-does and the few manual steps around it. The app listens on localhost only;
-how you reach it from your devices is a separate decision, covered under
-[Access](#4-access).
+karotto ships as one image, `ghcr.io/maxkueng/karotto`, built for amd64 and
+arm64 on Alpine. It bundles the API, the web app, `karotto-admin` and the
+`karotto` client. Postgres runs next to it as a second container.
+`docker/compose.yaml` wires the two together. The only state is the
+database.
 
-## 1. Install
+## 1. Requirements
 
-Requirements:
+- Docker Engine with the Compose plugin (`docker compose version`).
+- Memory: the app uses well under 200 MB, plus Postgres. Nothing is built on
+  the host, so small machines are fine.
+- Disk: about 500 MB for the images, plus the database (low megabytes for one
+  user) and whatever backups you keep.
+- Network: nothing inbound is required with Tailscale. Without it, ports 80
+  and 443 for a reverse proxy.
 
-- Debian 12 or newer, or Ubuntu 22.04 or newer, on x86-64 or arm64. The
-  installer uses `apt`, NodeSource and systemd; other distributions need the
-  same steps done by hand.
-- Root access for the installer. The service itself runs as an unprivileged
-  `karotto` user.
-- Memory: the running app uses well under 200 MB, plus Postgres. Building the
-  web app peaks around 800 MB, so a machine with less than 2 GB of RAM needs
-  swap; the installer adds a 2 GB swap file on such machines automatically.
-- Disk: about 1.5 GB for Node, the checkout with dependencies and Postgres,
-  plus backups. The database itself stays in the low megabytes for one user.
-- CPU: anything. One core builds the web app in a few minutes and the app
-  idles at zero afterwards.
-- Network: nothing inbound is required. Tailscale brings the app onto your
-  tailnet over an outbound connection. Without Tailscale, ports 80 and 443
-  for a reverse proxy.
+## 2. Start
 
-A cheap cloud VM, a Raspberry Pi 4 or 5, or any always-on machine you already
-have all qualify. Note the address; you only ever need it for SSH.
+Make a directory, put `docker/compose.yaml` and
+`docker/env.example` in it, rename the second to `.env`, and set
+`POSTGRES_PASSWORD`:
 
 ```sh
-git clone https://github.com/maxkueng/karotto.git ~/karotto
-sudo ~/karotto/deploy/install.sh
+mkdir karotto && cd karotto
+curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/docker/compose.yaml
+curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/docker/env.example -o .env
+$EDITOR .env
+docker compose up -d --wait
+docker compose exec app karotto-admin user create max --timezone Europe/Zurich
+curl http://127.0.0.1:3000/api/v1/health
 ```
 
-Clone as your normal user; only the installer needs root. It copies the
-checkout to `/opt/karotto/src` and hands it to the service user.
-
-The installer is idempotent. It:
-
-- installs Node 24 (NodeSource), Postgres, git, rsync and a build toolchain
-  for the `argon2` native module;
-- adds a 2 GB swap file on machines with less than 2 GB of RAM, because the
-  web build peaks around 800 MB even though the running app needs a fraction;
-- creates the `karotto` system user and `/opt/karotto`;
-- creates the `karotto` Postgres role with a random password and the
-  `karotto` database, and writes `/etc/karotto/env` (root-owned, readable by
-  the service);
-- runs `npm ci`, `npm run build`, then prunes dev dependencies;
-- installs `karotto.service`, a nightly `karotto-backup.timer`, the
-  `karotto-admin` maintenance command and the `karotto` client in
-  `/usr/local/bin`;
-- applies migrations and starts the service.
-
-Then create your account and check the service answers:
-
-```sh
-sudo karotto-admin user create max --timezone Europe/Zurich
-curl http://127.0.0.1:3210/api/v1/health
-sudo journalctl -u karotto -f
-```
-
-That is the whole installation. The app is now running on
-`http://127.0.0.1:3210` and nothing else on the machine has changed.
-
-## 2. Day to day
-
-| Task | Command |
-|---|---|
-| Update to the latest version | `cd ~/karotto && git pull && sudo deploy/install.sh` |
-| Logs | `journalctl -u karotto -f` |
-| Restart | `systemctl restart karotto` |
-| Create a user / API token | `karotto-admin user create <name>`, `karotto-admin token create <name> --name scripts` |
-| Change a password | `karotto-admin user password <name>` |
-| Manual backup | `systemctl start karotto-backup` |
-| Restore a backup | `zcat /var/backups/karotto/karotto-<stamp>.sql.gz \| sudo -u postgres psql karotto` |
-
-Backups land in `/var/backups/karotto` nightly at 03:30, last 30 kept. Copy
-them off the box now and then; a disk or VM snapshot is not a consistent
-database snapshot, the SQL dump is.
+Migrations run when the app container starts.
 
 ## 3. Configuration
 
-`/etc/karotto/env`:
+`.env` next to `compose.yaml`:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `DATABASE_URL` | set by installer | Postgres connection string |
-| `HOST`, `PORT` | `127.0.0.1`, `3210` | Bind address |
-| `STATIC_DIR` | `/opt/karotto/src/packages/web/dist` | Built web app served by the API process |
-| `TRUST_PROXY` | `true` | Trust `X-Forwarded-*` from Tailscale or the reverse proxy |
-| `SECURE_COOKIES` | on in production | Session cookie `Secure` flag; only turn off for plain HTTP on a LAN |
+| `POSTGRES_PASSWORD` | required | Database password; only the two containers use it |
+| `KAROTTO_VERSION` | `latest` | Image tag, see [Tags](#5-tags) |
+| `KAROTTO_BIND`, `KAROTTO_PORT` | `0.0.0.0`, `3000` | Address and port on the host. Published ports bypass host firewalls, so use `127.0.0.1` when a proxy on the same machine is the way in |
+| `SECURE_COOKIES` | `false` | Session cookie `Secure` flag. Set `true` behind anything that terminates HTTPS; with `true` over plain HTTP, browsers drop the cookie and login fails |
+| `TRUST_PROXY` | `false` | Trust `X-Forwarded-*`; `true` behind Tailscale or a reverse proxy |
 | `SESSION_TTL_DAYS` | `365` | Web session lifetime |
-| `AUTO_MIGRATE` | `true` | Apply migrations on start |
 | `LOG_LEVEL` | `info` | pino level |
 
-Edit, then `systemctl restart karotto`.
+Edit, then `docker compose up -d` to apply.
 
-## 4. Access
+## 4. Operating it
 
-The app binds to `127.0.0.1:3210` and speaks plain HTTP. It does not
-terminate TLS and it is not meant to face the internet directly. Pick one of
-the following, or anything else that can proxy to a local port.
+| Task | Command |
+|---|---|
+| Logs | `docker compose logs -f app` |
+| Restart | `docker compose restart app` |
+| Create a user / API token | `docker compose exec app karotto-admin user create <name>`, `… token create <name> --name scripts` |
+| Change a password | `docker compose exec app karotto-admin user password <name>` |
+| API client | `docker compose exec app karotto login --url http://localhost:3000 -u <name>`, then `… karotto tasks list` |
+
+### Backups
+
+The database is the only state. A `pg_dump` from the db container is a
+consistent snapshot; a copy of the Docker volume while Postgres runs is not.
+When and where to keep dumps is up to you; a cron job or systemd timer running
+the first command below, plus a copy off the machine, is enough.
+
+```sh
+docker compose exec -T db pg_dump -U karotto --no-owner --no-privileges karotto | gzip > karotto-$(date -u +%Y%m%dT%H%M%SZ).sql.gz
+```
+
+Restore, replacing the current database:
+
+```sh
+docker compose stop app
+docker compose exec -T db psql -U karotto -d postgres -c 'drop database karotto' -c 'create database karotto owner karotto'
+zcat karotto-<stamp>.sql.gz | docker compose exec -T db psql -U karotto -d karotto -v ON_ERROR_STOP=1 --quiet
+docker compose start app
+```
+
+### Updates
+
+```sh
+docker compose pull && docker compose up -d --wait
+```
+
+Migrations run on start and only go forward, so take a dump right before you
+pull. Going back to an older image means restoring that dump. For the same
+reason, an unattended updater (Watchtower and friends) can migrate the
+database long after the last backup.
+
+## 5. Tags
+
+| Tag | What |
+|---|---|
+| `latest` | Newest release |
+| `0.3.0`, `0.3` | A specific release, or its newest patch |
+| `edge` | Every push to `master`. Fine for trying things, not for keeping |
+
+Pin `KAROTTO_VERSION` if you want every version change to be an explicit
+edit, and an obvious rollback target.
+
+## 6. Access
+
+The app speaks plain HTTP. It does not terminate TLS and it is not meant to
+face the internet directly. Put something in front of it; the examples assume
+`KAROTTO_BIND=127.0.0.1`, `SECURE_COOKIES=true` and `TRUST_PROXY=true`.
 
 ### Tailscale
 
@@ -133,7 +138,7 @@ can also use port 443. One-time setup in the Tailscale admin console:
 4. On the machine, only after the tag and the service exist:
 
    ```sh
-   sudo tailscale serve --service=svc:karotto --https=443 127.0.0.1:3210
+   sudo tailscale serve --service=svc:karotto --https=443 127.0.0.1:3000
    ```
 
    If the host does not appear under the service within a minute, the
@@ -141,7 +146,7 @@ can also use port 443. One-time setup in the Tailscale admin console:
 
    ```sh
    sudo tailscale serve --service=svc:karotto reset
-   sudo tailscale serve --service=svc:karotto --https=443 127.0.0.1:3210
+   sudo tailscale serve --service=svc:karotto --https=443 127.0.0.1:3000
    ```
 
 `tailscale serve status` confirms the mapping; it survives reboots. Requires
@@ -152,7 +157,7 @@ Tailscale 1.86 or newer on the host.
 ```sh
 curl -fsSL https://tailscale.com/install.sh | sh
 sudo tailscale up                    # prints a login URL, approve it once
-sudo tailscale serve --bg https:443 http://127.0.0.1:3210
+sudo tailscale serve --bg https:443 http://127.0.0.1:3000
 ```
 
 This uses the machine's own name, `https://<machine>.<tailnet>.ts.net`, and
@@ -160,36 +165,24 @@ claims the machine's tailnet port 443; a second app needs another port
 (`https:8443`). Certificates need MagicDNS and HTTPS enabled once for the
 tailnet, which the command tells you about if they are not.
 
-Either way the URL works from every device on the tailnet. `TRUST_PROXY=true`
-in `/etc/karotto/env` makes the app read the client address from the
-`X-Forwarded-For` header Tailscale sets, and the session cookie stays
-HTTPS-only, which is right because the browser talks HTTPS to Tailscale.
-
 ### A reverse proxy with TLS
 
 For a public hostname, put Caddy (or nginx, Traefik, ...) in front and open
 ports 80 and 443. Caddy fetches its own certificates:
 
-```sh
-apt install caddy
-cat >/etc/caddy/Caddyfile <<'CADDY'
-karotto.example.com {
-    reverse_proxy 127.0.0.1:3210
-}
-CADDY
-systemctl reload caddy
 ```
-
-Keep `TRUST_PROXY=true` so rate limiting and logs see real client addresses.
+karotto.example.com {
+    reverse_proxy 127.0.0.1:3000
+}
+```
 
 ### Plain HTTP on the LAN
 
-For testing, or a network you trust, set `HOST=0.0.0.0` and
-`SECURE_COOKIES=false` in `/etc/karotto/env` and use
-`http://<machine>:3210`. Without the second setting the browser drops the
-session cookie over HTTP. Do not do this on a network you do not control.
+For testing, or a network you trust, keep the defaults
+(`KAROTTO_BIND=0.0.0.0`, `SECURE_COOKIES=false`) and use
+`http://<machine>:3000`. Do not do this on a network you do not control.
 
-## 5. Clients
+## 7. Clients
 
 Every client takes the URL you chose above.
 
@@ -198,115 +191,12 @@ Every client takes the URL you chose above.
   long-lived token on login and never stores the password. With Tailscale,
   install the Tailscale app on the phone and join the same tailnet.
 - **CLI:** `karotto login --url <url> -u <username>` on any machine with the
-  client, including the server itself, where the installer put it.
+  client, or inside the app container.
 - **Home Assistant:** add the Karotto integration with the URL and your
   credentials. See `docs/HOME_ASSISTANT.md`; on Home Assistant OS with
   Tailscale the Supervisor DNS needs to resolve `*.ts.net` names.
 
-## Docker
-
-The same app as a published image, `ghcr.io/maxkueng/karotto`, built for
-amd64 and arm64 on Alpine. Use it on a NAS, in a Proxmox VM, or anywhere you
-already run containers. It bundles the API, the web app, `karotto-admin` and
-the `karotto` client; Postgres runs as a second container.
-
-### Start
-
-Make a directory, put `deploy/docker/compose.yaml` and `deploy/docker/env.example`
-in it, rename the second to `.env`, and set `POSTGRES_PASSWORD`:
-
-```sh
-mkdir karotto && cd karotto
-curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/compose.yaml
-curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/env.example -o .env
-$EDITOR .env
-docker compose up -d
-docker compose exec app karotto-admin user create max --timezone Europe/Zurich
-```
-
-The app is on `http://<host>:3000`. Migrations run when the container starts.
-
-The image ships the client too, so the CLI works from inside the container:
-
-```sh
-docker compose exec app karotto login --url http://localhost:3000 -u max
-docker compose exec app karotto tasks list
-```
-
-### Tags
-
-| Tag | What |
-|---|---|
-| `latest` | Newest release |
-| `0.2.0`, `0.2` | A specific release, or its newest patch |
-| `edge` | Every push to `master`. Fine for trying things, not for keeping |
-
-Pin `KAROTTO_VERSION` in `.env` if you don't want `docker compose pull` to
-move you to a new major version unattended.
-
-### Update
-
-```sh
-docker compose pull && docker compose up -d
-```
-
-### Back up
-
-The only state is the database. A dump from the `db` container is a
-consistent backup; a snapshot of the volume is not.
-
-```sh
-docker compose exec db pg_dump -U karotto karotto | gzip > karotto-$(date +%F).sql.gz
-zcat karotto-2026-09-30.sql.gz | docker compose exec -T db psql -U karotto karotto   # restore
-```
-
-### Reach it
-
-Everything under [Access](#4-access) applies: put Tailscale Serve, Caddy or
-another TLS proxy in front of port 3000 and set `SECURE_COOKIES=true` and
-`TRUST_PROXY=true` in `.env`. Without a proxy, leave `SECURE_COOKIES=false`
-or browsers will refuse the session cookie over plain HTTP.
-
-### On a host you manage, with host commands
-
-`deploy/docker/host/` turns the compose file into a managed install like the
-systemd one: the project lives in `/opt/karotto/docker`, the app listens on
-`127.0.0.1:3210` behind Tailscale Serve, and the host gets the same commands.
-
-```sh
-git clone https://github.com/maxkueng/karotto.git ~/karotto
-sudo ~/karotto/deploy/docker/host/install.sh   # compose project, .env with a random password, commands, backup timer
-sudo karotto-update                            # backup, pull, start, refresh the host client
-sudo karotto-admin user create max --timezone Europe/Zurich
-```
-
-| Command | What |
-|---|---|
-| `sudo karotto-update` | Dump the database, `docker compose pull`, `up --wait`, copy the client out of the image |
-| `sudo karotto-admin …` | `karotto-admin` inside the app container |
-| `karotto …` | The API client, run by the host's Node from `/opt/karotto/client`; needs no Docker access |
-| `systemctl start karotto-backup` | Manual dump to `/var/backups/karotto`; the timer runs nightly, last 30 kept |
-
-Updates stay manual on purpose: migrations run when the container starts and
-only go forward, so `karotto-update` always dumps first. Do not add an
-auto-updater.
-
-Moving an existing systemd install to Docker on the same host:
-
-```sh
-cd ~/karotto && git pull
-sudo deploy/docker/host/migrate-from-native.sh
-```
-
-It starts an empty db container, stops `karotto.service`, dumps the native
-database to `/var/backups/karotto/pre-docker-<stamp>.sql.gz`, restores it into
-the container, starts the app on the same port and stops native Postgres
-(left installed). Downtime is the length of a dump and restore. The script
-prints the rollback steps at the end. Once you're happy, remove the leftovers:
-`/opt/karotto/src`, `/etc/karotto`, `/etc/systemd/system/karotto.service` and
-the `postgresql` package.
-
-### Build it yourself
+## Build it yourself
 
 ```sh
 docker build -t karotto .

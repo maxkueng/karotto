@@ -216,34 +216,23 @@ karotto-admin token list <username> | revoke <username> <id>
 ```
 
 In development run it through `npm run cli -w @karotto/server -- <args>`; in
-the container it is `node packages/server/dist/cli.js <args>`.
+production, `docker compose exec app karotto-admin <args>`.
 
 ## Production
 
-One Debian/Ubuntu box, Postgres alongside, the app as a systemd service
-listening on localhost. How you reach it (Tailscale, a reverse proxy, plain
-HTTP on a LAN) is a separate choice:
+One Docker image, `ghcr.io/maxkueng/karotto` for amd64 and arm64, plus
+Postgres, in `docker/compose.yaml`:
 
 ```sh
-git clone <this repo> ~/karotto
-sudo ~/karotto/deploy/install.sh
-sudo karotto-admin user create max --timezone Europe/Zurich
-```
-
-Re-run the installer after `git pull` to update. Full walkthrough, including
-requirements, access options, backups and configuration:
-[docs/DEPLOY.md](docs/DEPLOY.md).
-
-Prefer containers? A published image, `ghcr.io/maxkueng/karotto` for amd64
-and arm64, plus `deploy/docker/compose.yaml` with Postgres included:
-
-```sh
+curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/docker/compose.yaml
+curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/docker/env.example -o .env
+$EDITOR .env                       # set POSTGRES_PASSWORD
 docker compose up -d
 docker compose exec app karotto-admin user create max --timezone Europe/Zurich
 ```
 
-Details, tags, backups and the reverse-proxy settings are in the Docker
-section of [docs/DEPLOY.md](docs/DEPLOY.md#docker).
+Requirements, configuration, backups, updates and how to reach it over
+Tailscale or a reverse proxy: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 
 ## Credits
