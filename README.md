@@ -221,21 +221,18 @@ the container it is `node packages/server/dist/cli.js <args>`.
 ## Production
 
 One Docker image, `ghcr.io/maxkueng/karotto` for amd64 and arm64, plus
-Postgres in Compose. On a box you dedicate to it, the managed install adds
-host commands and a nightly backup timer; the app listens on
-`127.0.0.1:3210` for Tailscale Serve or a reverse proxy:
+Postgres, in `deploy/docker/compose.yaml`:
 
 ```sh
-git clone https://github.com/maxkueng/karotto.git ~/karotto
-sudo ~/karotto/deploy/docker/host/install.sh
-sudo karotto-update
-sudo karotto-admin user create max --timezone Europe/Zurich
+curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/compose.yaml
+curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/env.example -o .env
+$EDITOR .env                       # set POSTGRES_PASSWORD
+docker compose up -d
+docker compose exec app karotto-admin user create max --timezone Europe/Zurich
 ```
 
-`sudo karotto-update` updates it later: backup, pull, restart. On a NAS or an
-existing container host, `deploy/docker/compose.yaml` and its `env.example`
-are all you need. Full walkthrough, including requirements, access options,
-backups and configuration: [docs/DEPLOY.md](docs/DEPLOY.md).
+Requirements, configuration, backups, updates and how to reach it over
+Tailscale or a reverse proxy: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 
 ## Credits

@@ -1,8 +1,0 @@
-[Unit]
-Description=karotto database backup
-After=docker.service
-Requires=docker.service
-
-[Service]
-Type=oneshot
-ExecStart=/opt/karotto/backup.sh

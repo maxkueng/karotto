@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# Runs the server's maintenance commands (users, tokens, migrations) inside the app container.
-set -euo pipefail
-COMPOSE_FILE=${KAROTTO_COMPOSE_FILE:-/opt/karotto/docker/compose.yaml}
-tty=()
-[[ -t 0 && -t 1 ]] || tty=(-T)
-exec docker compose -f "$COMPOSE_FILE" exec "${tty[@]}" app karotto-admin "$@"

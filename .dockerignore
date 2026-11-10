@@ -10,7 +10,6 @@ packages/android
 packages/web/e2e
 docs
 skills
-deploy/docker/host
 .env
 .env.*
 *.md
