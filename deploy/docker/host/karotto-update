@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Backs up the database, pulls the configured image, restarts what changed and refreshes the host client.
+set -euo pipefail
+
+COMPOSE_FILE=${KAROTTO_COMPOSE_FILE:-/opt/karotto/docker/compose.yaml}
+CLIENT_DIR=/opt/karotto/client
+
+log() { printf '\033[1;35m[karotto]\033[0m %s\n' "$*"; }
+die() { printf '\033[1;31m[karotto]\033[0m %s\n' "$*" >&2; exit 1; }
+dc() { docker compose -f "$COMPOSE_FILE" "$@"; }
+
+[[ $EUID -eq 0 ]] || die "run as root (sudo)"
+[[ -f "$COMPOSE_FILE" ]] || die "$COMPOSE_FILE is missing; run deploy/docker/host/install.sh first"
+
+backup() {
+  if dc ps --status running --quiet db | grep -q .; then
+    log "backing up before the update"
+    /opt/karotto/backup.sh
+  fi
+}
+
+staging=
+trap '[[ -z "$staging" ]] || rm -rf "$staging"' EXIT
+
+install_client() {
+  log "refreshing the karotto client in $CLIENT_DIR"
+  staging="$(mktemp -d /opt/karotto/client.XXXXXX)"
+  mkdir -p "$staging/packages"
+  dc cp app:/app/node_modules "$staging/node_modules" >/dev/null
+  dc cp app:/app/packages/cli "$staging/packages/cli" >/dev/null
+  chown -R root:root "$staging"
+  chmod -R u=rwX,go=rX "$staging"
+  rm -rf "$CLIENT_DIR.old"
+  [[ -d "$CLIENT_DIR" ]] && mv "$CLIENT_DIR" "$CLIENT_DIR.old"
+  mv "$staging" "$CLIENT_DIR"
+  staging=
+  rm -rf "$CLIENT_DIR.old"
+}
+
+backup
+log "pulling images"
+dc pull --quiet
+log "starting"
+dc up --detach --wait --remove-orphans
+install_client
+docker image prune --force >/dev/null
+dc ps

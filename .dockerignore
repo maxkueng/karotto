@@ -15,6 +15,7 @@ deploy/*.timer
 deploy/*.sh
 deploy/karotto
 deploy/karotto-admin
+deploy/docker/host
 .env
 .env.*
 *.md

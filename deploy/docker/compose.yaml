@@ -14,8 +14,11 @@ services:
       SECURE_COOKIES: ${SECURE_COOKIES:-false}
       TRUST_PROXY: ${TRUST_PROXY:-false}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-365}
     ports:
-      - "${KAROTTO_PORT:-3000}:3000"
+      - "${KAROTTO_BIND:-0.0.0.0}:${KAROTTO_PORT:-3000}:3000"
+    logging:
+      driver: local
 
   db:
     image: postgres:17-alpine
@@ -31,6 +34,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    logging:
+      driver: local
 
 volumes:
   karotto-db:

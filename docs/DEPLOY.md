@@ -267,6 +267,45 @@ another TLS proxy in front of port 3000 and set `SECURE_COOKIES=true` and
 `TRUST_PROXY=true` in `.env`. Without a proxy, leave `SECURE_COOKIES=false`
 or browsers will refuse the session cookie over plain HTTP.
 
+### On a host you manage, with host commands
+
+`deploy/docker/host/` turns the compose file into a managed install like the
+systemd one: the project lives in `/opt/karotto/docker`, the app listens on
+`127.0.0.1:3210` behind Tailscale Serve, and the host gets the same commands.
+
+```sh
+git clone https://github.com/maxkueng/karotto.git ~/karotto
+sudo ~/karotto/deploy/docker/host/install.sh   # compose project, .env with a random password, commands, backup timer
+sudo karotto-update                            # backup, pull, start, refresh the host client
+sudo karotto-admin user create max --timezone Europe/Zurich
+```
+
+| Command | What |
+|---|---|
+| `sudo karotto-update` | Dump the database, `docker compose pull`, `up --wait`, copy the client out of the image |
+| `sudo karotto-admin …` | `karotto-admin` inside the app container |
+| `karotto …` | The API client, run by the host's Node from `/opt/karotto/client`; needs no Docker access |
+| `systemctl start karotto-backup` | Manual dump to `/var/backups/karotto`; the timer runs nightly, last 30 kept |
+
+Updates stay manual on purpose: migrations run when the container starts and
+only go forward, so `karotto-update` always dumps first. Do not add an
+auto-updater.
+
+Moving an existing systemd install to Docker on the same host:
+
+```sh
+cd ~/karotto && git pull
+sudo deploy/docker/host/migrate-from-native.sh
+```
+
+It starts an empty db container, stops `karotto.service`, dumps the native
+database to `/var/backups/karotto/pre-docker-<stamp>.sql.gz`, restores it into
+the container, starts the app on the same port and stops native Postgres
+(left installed). Downtime is the length of a dump and restore. The script
+prints the rollback steps at the end. Once you're happy, remove the leftovers:
+`/opt/karotto/src`, `/etc/karotto`, `/etc/systemd/system/karotto.service` and
+the `postgresql` package.
+
 ### Build it yourself
 
 ```sh
