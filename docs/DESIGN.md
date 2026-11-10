@@ -47,7 +47,7 @@ one column and one select.
 | Themes | `core/src/theme`: OKLCH palette engine; generates CSS variables for the web and Kotlin palettes for Android |
 | Auth | argon2id passwords, DB-backed session cookie, hashed named API tokens |
 | Live updates | Server-Sent Events from an in-process hub; every mutation publishes to the user's streams |
-| Deploy | One Docker image (API, web app, both CLIs) plus Postgres in `deploy/docker/compose.yaml` |
+| Deploy | One Docker image (API, web app, both CLIs) plus Postgres in `docker/compose.yaml` |
 
 The scoring, schedule and rollover math live in `core` so the browser computes
 exactly what the server will persist (optimistic UI without drift).

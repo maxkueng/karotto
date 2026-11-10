@@ -3,7 +3,7 @@
 karotto ships as one image, `ghcr.io/maxkueng/karotto`, built for amd64 and
 arm64 on Alpine. It bundles the API, the web app, `karotto-admin` and the
 `karotto` client. Postgres runs next to it as a second container.
-`deploy/docker/compose.yaml` wires the two together. The only state is the
+`docker/compose.yaml` wires the two together. The only state is the
 database.
 
 ## 1. Requirements
@@ -18,14 +18,14 @@ database.
 
 ## 2. Start
 
-Make a directory, put `deploy/docker/compose.yaml` and
-`deploy/docker/env.example` in it, rename the second to `.env`, and set
+Make a directory, put `docker/compose.yaml` and
+`docker/env.example` in it, rename the second to `.env`, and set
 `POSTGRES_PASSWORD`:
 
 ```sh
 mkdir karotto && cd karotto
-curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/compose.yaml
-curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/env.example -o .env
+curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/docker/compose.yaml
+curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/docker/env.example -o .env
 $EDITOR .env
 docker compose up -d --wait
 docker compose exec app karotto-admin user create max --timezone Europe/Zurich

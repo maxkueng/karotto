@@ -216,16 +216,16 @@ karotto-admin token list <username> | revoke <username> <id>
 ```
 
 In development run it through `npm run cli -w @karotto/server -- <args>`; in
-the container it is `node packages/server/dist/cli.js <args>`.
+production, `docker compose exec app karotto-admin <args>`.
 
 ## Production
 
 One Docker image, `ghcr.io/maxkueng/karotto` for amd64 and arm64, plus
-Postgres, in `deploy/docker/compose.yaml`:
+Postgres, in `docker/compose.yaml`:
 
 ```sh
-curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/compose.yaml
-curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/deploy/docker/env.example -o .env
+curl -fsSLO https://raw.githubusercontent.com/maxkueng/karotto/master/docker/compose.yaml
+curl -fsSL https://raw.githubusercontent.com/maxkueng/karotto/master/docker/env.example -o .env
 $EDITOR .env                       # set POSTGRES_PASSWORD
 docker compose up -d
 docker compose exec app karotto-admin user create max --timezone Europe/Zurich

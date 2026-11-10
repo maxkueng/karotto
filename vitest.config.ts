@@ -5,6 +5,6 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
-    projects: ['packages/*'],
+    projects: ['packages/*/vitest.config.ts'],
   },
 });
