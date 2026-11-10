@@ -1,6 +1,6 @@
 {
   "name": "karotto",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "license": "GPL-3.0-only",
   "description": "Habit, daily and to-do tracker without the game",

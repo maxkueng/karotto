@@ -1,0 +1,41 @@
+name: CLI release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Tag matches package version
+        run: |
+          version="$(node -p 'require("./packages/cli/package.json").version')"
+          [[ "v$version" == "$GITHUB_REF_NAME" ]] || { echo "::error::tag $GITHUB_REF_NAME but packages/cli is $version"; exit 1; }
+
+      - run: npm ci
+
+      - run: npm run build:standalone -w @karotto/cli
+
+      - name: Smoke test
+        run: |
+          mkdir "$RUNNER_TEMP/bare" && cp packages/cli/dist/standalone/karotto "$RUNNER_TEMP/bare/"
+          cd "$RUNNER_TEMP/bare" && [[ "$(./karotto --version)" == "${GITHUB_REF_NAME#v}" ]]
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: karotto ${{ github.ref_name }}
+          files: packages/cli/dist/standalone/karotto
+          generate_release_notes: true
+          make_latest: "false"

@@ -181,6 +181,16 @@ curl -N -H "Authorization: Bearer krt_..." http://localhost:3210/api/v1/events
 `karotto` is a separate client for humans, scripts and AI agents. It only
 speaks to the API; the server's own maintenance commands are `karotto-admin`.
 
+Each release (`v*`) attaches it as a single executable that needs only Node 24:
+
+```sh
+curl -fsSL https://github.com/maxkueng/karotto/releases/download/v0.3.2/karotto -o ~/.local/bin/karotto
+chmod +x ~/.local/bin/karotto
+```
+
+Re-run with a newer tag to update. The API is versioned, so the client does not
+have to match the server release exactly. The Docker image ships it too.
+
 ```sh
 karotto login --url https://karotto.example.ts.net -u max   # stores a token in ~/.config/karotto
 karotto tasks list --due

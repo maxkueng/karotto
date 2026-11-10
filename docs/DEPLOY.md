@@ -190,8 +190,9 @@ Every client takes the URL you chose above.
 - **Android app:** enter the URL on the login screen. It creates its own
   long-lived token on login and never stores the password. With Tailscale,
   install the Tailscale app on the phone and join the same tailnet.
-- **CLI:** `karotto login --url <url> -u <username>` on any machine with the
-  client, or inside the app container.
+- **CLI:** `karotto login --url <url> -u <username>` inside the app container,
+  or on any machine with Node 24 after downloading the standalone `karotto`
+  from a release (see the README's command-line client section).
 - **Home Assistant:** add the Karotto integration with the URL and your
   credentials. See `docs/HOME_ASSISTANT.md`; on Home Assistant OS with
   Tailscale the Supervisor DNS needs to resolve `*.ts.net` names.

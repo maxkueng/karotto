@@ -1,6 +1,6 @@
 {
   "name": "@karotto/cli",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "karotto: command-line client for the karotto API",
   "type": "module",
   "private": true,
@@ -12,7 +12,8 @@
     "dev": "tsx src/main.ts",
     "build": "tsup",
     "typecheck": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "build:standalone": "tsup --config tsup.standalone.config.ts && mv dist/standalone/karotto.js dist/standalone/karotto"
   },
   "dependencies": {
     "@karotto/core": "*",

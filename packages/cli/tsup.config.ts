@@ -1,13 +1,9 @@
 import { defineConfig } from 'tsup';
+import { shared } from './tsup.shared';
 
 export default defineConfig({
+  ...shared,
   entry: ['src/main.ts'],
-  format: ['esm'],
-  target: 'node24',
-  platform: 'node',
   sourcemap: true,
-  clean: true,
-  splitting: false,
-  banner: { js: '#!/usr/bin/env node' },
   noExternal: ['@karotto/core'],
 });
