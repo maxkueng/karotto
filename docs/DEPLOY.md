@@ -270,25 +270,6 @@ Every client takes the URL you chose above.
   credentials. See `docs/HOME_ASSISTANT.md`; on Home Assistant OS with
   Tailscale the Supervisor DNS needs to resolve `*.ts.net` names.
 
-## Moving from the old systemd install
-
-Earlier versions installed karotto natively with `deploy/install.sh`: a
-systemd service, Postgres from apt, `/etc/karotto/env`. To move such a host
-to the managed Docker install:
-
-```sh
-cd ~/karotto && git pull
-sudo deploy/docker/host/migrate-from-native.sh
-```
-
-It starts an empty db container, stops `karotto.service`, dumps the native
-database to `/var/backups/karotto/pre-docker-<stamp>.sql.gz`, restores it into
-the container, starts the app on the same `127.0.0.1:3210` and stops native
-Postgres (left installed). Downtime is the length of a dump and restore. The
-script prints the rollback steps at the end. Once you're happy, remove the
-leftovers: `/opt/karotto/src`, `/etc/karotto`,
-`/etc/systemd/system/karotto.service` and the `postgresql` package.
-
 ## Build it yourself
 
 ```sh
