@@ -10,11 +10,6 @@ packages/android
 packages/web/e2e
 docs
 skills
-deploy/*.service
-deploy/*.timer
-deploy/*.sh
-deploy/karotto
-deploy/karotto-admin
 deploy/docker/host
 .env
 .env.*

@@ -52,6 +52,6 @@ Done. karotto now runs in Docker on 127.0.0.1:3210.
 Rollback (loses anything written since the cutover):
   sudo docker compose -f $COMPOSE_FILE down
   sudo systemctl enable --now postgresql karotto
-  sudo ~/karotto/deploy/install.sh   # restores the native backup timer and commands
+  # the native backup timer and commands come back with deploy/install.sh from v0.3.0 or older
 The native dump is $dump.
 MSG

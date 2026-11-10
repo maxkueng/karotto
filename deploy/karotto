@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# Runs the karotto command-line client (talks to the API) from the deployed checkout.
-exec node "${KAROTTO_INSTALL_DIR:-/opt/karotto/src}/packages/cli/dist/main.js" "$@"

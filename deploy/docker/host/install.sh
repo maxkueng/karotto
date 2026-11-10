@@ -13,10 +13,8 @@ die() { printf '\033[1;31m[karotto]\033[0m %s\n' "$*" >&2; exit 1; }
 [[ $EUID -eq 0 ]] || die "run as root (sudo)"
 command -v docker >/dev/null || die "docker is not installed"
 docker compose version >/dev/null 2>&1 || die "the docker compose plugin is not installed"
-command -v node >/dev/null || die "node is not installed; the karotto client runs on the host"
 
 host_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-deploy_dir="$(cd "$host_dir/../.." && pwd)"
 
 install_compose() {
   install -d -m 755 /opt/karotto
@@ -38,7 +36,7 @@ install_commands() {
   install -m 755 "$host_dir/backup.sh" /opt/karotto/backup.sh
   install -d -m 700 "$BACKUP_DIR"
   install -m 644 "$host_dir/karotto-backup.service" /etc/systemd/system/karotto-backup.service
-  install -m 644 "$deploy_dir/karotto-backup.timer" /etc/systemd/system/karotto-backup.timer
+  install -m 644 "$host_dir/karotto-backup.timer" /etc/systemd/system/karotto-backup.timer
   systemctl daemon-reload
   systemctl enable --now docker >/dev/null
   systemctl enable --now karotto-backup.timer >/dev/null
@@ -46,5 +44,6 @@ install_commands() {
 
 install_compose
 install_commands
+command -v node >/dev/null || log "node is not installed: the karotto client on the host will not run; inside the container it does"
 
 log "installed. Start or update with: sudo karotto-update"
