@@ -6,6 +6,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "tsup.config.ts"],
+  "include": ["src/**/*", "tsup*.ts"],
   "exclude": ["dist"]
 }

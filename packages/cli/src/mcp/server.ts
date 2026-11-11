@@ -17,6 +17,7 @@ import {
   tagMap,
 } from '@/context';
 import { taskBody } from '@/task-input';
+import { version } from '@/version';
 
 const taskRef = z.string().min(1).describe('Task alias, id, or unique id prefix');
 
@@ -169,7 +170,7 @@ function compact(
 export function buildMcpServer(api: ApiClient): McpServer {
   const server = new McpServer({
     name: 'karotto',
-    version: '0.1.0',
+    version,
   });
 
   server.registerTool(

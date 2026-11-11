@@ -13,6 +13,7 @@ import { registerTasks } from '@/commands/tasks';
 import type { Globals } from '@/context';
 import { fail } from '@/output';
 import type { Output } from '@/output';
+import { version } from '@/version';
 
 const parser: Argv<Globals> = yargs(hideBin(process.argv))
   .scriptName('karotto')
@@ -78,6 +79,7 @@ await registered
       ),
     );
   })
+  .version(version)
   .help()
   .wrap(Math.min(
     100,
