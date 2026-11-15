@@ -1,15 +1,12 @@
-import {
-  createSignal,
-
+import { createSignal } from 'solid-js';
+import type {
+  Accessor,
+  JSX,
 } from 'solid-js';
-import type { Accessor } from 'solid-js';
 import { render } from 'solid-js/web';
 import { setTransport } from '@/api/transport';
 import cardCss from '@/card/card.css?inline';
-import {
-  haTransport,
-
-} from '@/card/haTransport';
+import { haTransport } from '@/card/haTransport';
 import type { HassConnection } from '@/card/haTransport';
 import { Snackbars } from '@/components/ui/Snackbars';
 import { PortalMount } from '@/lib/portal';
@@ -20,6 +17,7 @@ import { SessionProvider } from '@/stores/session';
 import { TagsProvider } from '@/stores/tags';
 import { TasksProvider } from '@/stores/tasks';
 import { themeElement } from '@/stores/theme';
+import { twc } from '@/styles/twc';
 
 type Hass = {
   connection: HassConnection;
@@ -50,6 +48,27 @@ function hoistDocumentRules(): void {
 
 hoistDocumentRules();
 
+const Notice = twc(
+  'div',
+  [
+    'm-4',
+    'rounded-md',
+    'bg-well',
+    'px-4',
+    'py-3',
+    'text-sm',
+    'text-ink',
+  ],
+);
+
+function notice() {
+  return (
+    <Notice role="status">
+      Only one Karotto card works per view. This one stays off while another is showing; put it in a view of its own.
+    </Notice>
+  );
+}
+
 function board(mount: Node) {
   return (
     <PortalMount.Provider value={mount}>
@@ -72,11 +91,16 @@ function board(mount: Node) {
   );
 }
 
+const running = new Set<KarottoCard>();
+const waiting = new Set<KarottoCard>();
+
 class KarottoCard extends HTMLElement {
   private config: CardConfig = {};
   private readonly isDark: Accessor<boolean>;
   private readonly setDark: (dark: boolean) => void;
-  private dispose: (() => void) | undefined;
+  private mount: HTMLDivElement | undefined;
+  private stopTheme: (() => void) | undefined;
+  private stopContent: (() => void) | undefined;
   private connected: (connection: HassConnection) => void = () => undefined;
   private readonly connection = new Promise<HassConnection>((resolve) => {
     this.connected = resolve;
@@ -102,35 +126,62 @@ class KarottoCard extends HTMLElement {
   }
 
   connectedCallback(): void {
-    if (this.dispose) {
+    if (this.mount) {
       return;
     }
-    setTransport(haTransport(
-      () => this.connection,
-      this.config.config_entry_id,
-    ));
     const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
     shadow.adoptedStyleSheets = [sheet];
-    const mount = document.createElement('div');
-    shadow.replaceChildren(mount);
-    const stopTheme = themeElement(
+    this.mount = document.createElement('div');
+    shadow.replaceChildren(this.mount);
+    this.stopTheme = themeElement(
       this,
       () => this.config.theme ?? 'carrot',
       () => (this.isDark() ? 'dark' : 'light'),
     );
-    const stopRender = render(
-      () => board(mount),
-      mount,
-    );
-    this.dispose = () => {
-      stopRender();
-      stopTheme();
-    };
+    if (running.size === 0) {
+      this.activate();
+    } else {
+      waiting.add(this);
+      this.show(notice);
+    }
   }
 
   disconnectedCallback(): void {
-    this.dispose?.();
-    this.dispose = undefined;
+    this.stopContent?.();
+    this.stopTheme?.();
+    this.stopContent = undefined;
+    this.stopTheme = undefined;
+    this.mount = undefined;
+    waiting.delete(this);
+    if (running.delete(this)) {
+      const [next] = waiting;
+      if (next) {
+        waiting.delete(next);
+        next.activate();
+      }
+    }
+  }
+
+  /** The app's stores share one transport per page, so only one card may run the board at a time. */
+  private activate(): void {
+    running.add(this);
+    setTransport(haTransport(
+      () => this.connection,
+      this.config.config_entry_id,
+    ));
+    this.show(board);
+  }
+
+  private show(content: (mount: Node) => JSX.Element): void {
+    const { mount } = this;
+    if (!mount) {
+      return;
+    }
+    this.stopContent?.();
+    this.stopContent = render(
+      () => content(mount),
+      mount,
+    );
   }
 
   getCardSize(): number {
