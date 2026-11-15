@@ -39,3 +39,12 @@ jobs:
           files: packages/cli/dist/standalone/karotto
           generate_release_notes: true
           make_latest: "false"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cli-latest
+          name: karotto CLI (latest)
+          body: Rolling copy of the `karotto` client from the newest `v*` release, currently ${{ github.ref_name }}.
+          files: packages/cli/dist/standalone/karotto
+          prerelease: true
+          make_latest: "false"
