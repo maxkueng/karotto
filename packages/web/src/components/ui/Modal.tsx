@@ -4,8 +4,10 @@ import {
   onCleanup,
   onMount,
   Show,
+  useContext,
 } from 'solid-js';
 import { Portal } from 'solid-js/web';
+import { PortalMount } from '@/lib/portal';
 import { lockScroll } from '@/lib/scrollLock';
 import { twc } from '@/styles/twc';
 
@@ -82,7 +84,7 @@ export function Modal(props: ModalProps) {
 
   return (
     <Show when={props.open}>
-      <Portal>
+      <Portal mount={useContext(PortalMount)}>
         <Backdrop onClick={(event) => {
           if (event.target === event.currentTarget && props.closeOnBackdrop !== false) {
             requestClose();

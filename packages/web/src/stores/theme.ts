@@ -75,20 +75,21 @@ export const preferredMode = createMemo<ThemeMode>(() => {
   return preference;
 });
 
-export const resolvedTheme = createMemo(() => resolveTheme(
-  theme(),
-  preferredMode(),
-));
-
 /** True when the current theme ships both a light and a dark variant. */
 export const canSwitchMode = createMemo(() => themeModes(theme()).length === 2);
 
-function apply(): void {
-  const root = document.documentElement;
+function paint(
+  root: HTMLElement,
+  spec: ThemeSpec,
+  preferred: ThemeMode,
+): void {
   const {
     mode,
     tokens,
-  } = resolvedTheme();
+  } = resolveTheme(
+    spec,
+    preferred,
+  );
   Object.entries(tokens).forEach(([
     key,
     value,
@@ -97,14 +98,18 @@ function apply(): void {
     value,
   ));
   root.style.colorScheme = mode;
-  root.dataset.theme = theme().id;
+  root.dataset.theme = spec.id;
   root.dataset.mode = mode;
 }
 
 /** Installs the theme before the first render and keeps the document in sync afterwards. */
 export function initTheme(): void {
   createRoot(() => {
-    createEffect(apply);
+    createEffect(() => paint(
+      document.documentElement,
+      theme(),
+      preferredMode(),
+    ));
     createEffect(() => store(
       THEME_KEY,
       themeId(),
@@ -113,6 +118,22 @@ export function initTheme(): void {
       MODE_KEY,
       modePreference(),
     ));
+  });
+}
+
+/** Themes one element without touching the document or the saved choice. */
+export function themeElement(
+  root: HTMLElement,
+  id: () => string,
+  mode: () => ThemeMode,
+): () => void {
+  return createRoot((dispose) => {
+    createEffect(() => paint(
+      root,
+      findTheme(id()),
+      mode(),
+    ));
+    return dispose;
   });
 }
 

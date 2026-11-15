@@ -1,5 +1,7 @@
 import { CLIENT_ID_HEADER } from '@karotto/core';
 import type { ApiErrorBody } from '@karotto/core';
+import type { Method } from '@/api/transport';
+import { transport } from '@/api/transport';
 import { newId } from '@/lib/ids';
 
 export class ApiRequestError extends Error {
@@ -21,9 +23,8 @@ export class ApiRequestError extends Error {
   }
 }
 
-export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
-
-export const BASE = '/api/v1';
+export type { Method } from '@/api/transport';
+export { BASE } from '@/api/transport';
 
 /** Identifies this tab so its own changes can be told apart on the event stream. */
 export const CLIENT_ID = newId();
@@ -41,25 +42,17 @@ export async function request<T>(
   body?: unknown,
   headers: Record<string, string> = {},
 ): Promise<T> {
-  const response = await fetch(
-    `${BASE}${path}`,
+  const response = await transport().send(
+    method,
+    path,
+    body,
     {
-      method,
-      credentials: 'same-origin',
-      headers: {
-        [CLIENT_ID_HEADER]: CLIENT_ID,
-        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-        ...headers,
-      },
-      body: body === undefined ? null : JSON.stringify(body),
+      [CLIENT_ID_HEADER]: CLIENT_ID,
+      ...headers,
     },
   );
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  const text = await response.text();
-  const json: unknown = text ? JSON.parse(text) : null;
-  if (!response.ok) {
+  const json = response.body;
+  if (response.status >= 400) {
     const parsed = json as Partial<ApiErrorBody> | null;
     const code = parsed?.error?.code ?? 'error';
     const message = parsed?.error?.message ?? response.statusText;
