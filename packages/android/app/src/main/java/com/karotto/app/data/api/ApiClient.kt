@@ -5,6 +5,9 @@ import com.karotto.app.domain.ScoreRequest
 import com.karotto.app.domain.Tag
 import com.karotto.app.domain.User
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
@@ -20,11 +23,16 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import java.io.IOException
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 private const val CLIENT_ID_HEADER = "X-Client-Id"
+private const val API_REVISION_HEADER = "X-Karotto-Api-Revision"
+
+/** What a server that predates the revision header serves. */
+private const val BASELINE_API_REVISION = 1
 
 class ApiException(val status: Int, val code: String, message: String) : IOException(message)
 
@@ -63,6 +71,18 @@ class ApiClient(
 
     private val jsonMedia = "application/json; charset=utf-8".toMediaType()
 
+    private val serverRevision = MutableStateFlow<Int?>(null)
+
+    /** API revision of the server last answered from; null until the first response. */
+    val serverApiRevision: StateFlow<Int?> = serverRevision.asStateFlow()
+
+    /** Only a successful answer without the header is trusted to come from an older karotto, not a proxy. */
+    private fun recordServerRevision(response: Response) {
+        val revision = response.header(API_REVISION_HEADER)?.toIntOrNull()
+            ?: if (response.isSuccessful) BASELINE_API_REVISION else return
+        serverRevision.value = revision
+    }
+
     private fun url(path: String, base: String = requireCredentials().baseUrl): HttpUrl {
         val root = base.trimEnd('/').toHttpUrlOrNull() ?: throw ApiException(0, "bad_url", "Invalid server URL")
         return root.newBuilder().encodedPath(root.encodedPath.trimEnd('/') + "/api/v1" + path).build()
@@ -91,6 +111,7 @@ class ApiClient(
             throw NetworkException(error)
         }
         response.use { res ->
+            recordServerRevision(res)
             val text = res.body.string()
             if (!res.isSuccessful) {
                 val parsed = runCatching { json.decodeFromString(ApiErrorBody.serializer(), text) }.getOrNull()

@@ -136,6 +136,9 @@ the tag and attaches the file to a GitHub release. Signing needs the four
 password); without a keystore a local `assembleRelease` produces an unsigned
 APK.
 
+The app shows a banner when the server is older than the API revision it was
+built against; see [Releases and compatibility](#releases-and-compatibility).
+
 Server URL on the login screen:
 
 - Emulator: `http://10.0.2.2:3210` (the host's loopback).
@@ -181,19 +184,20 @@ curl -N -H "Authorization: Bearer krt_..." http://localhost:3210/api/v1/events
 `karotto` is a separate client for humans, scripts and AI agents. It only
 speaks to the API; the server's own maintenance commands are `karotto-admin`.
 
-Each release (`v*`) attaches it as a single executable that needs only Node 24:
+Each `cli-v*` release attaches it as a single executable that needs only Node 24:
 
 ```sh
 curl -fsSL https://github.com/maxkueng/karotto/releases/download/cli-latest/karotto -o ~/.local/bin/karotto
 chmod +x ~/.local/bin/karotto
 ```
 
-`karotto update` replaces it with the newest release, and interactive commands
-mention once a day when one is out (`KAROTTO_NO_UPDATE_CHECK=1` silences
-that). Install it somewhere you own, like `~/.local/bin`, so it can update
-itself; a system-wide copy needs `sudo karotto update`. The API is versioned,
-so the client does not have to match the server release exactly. The Docker
-image ships it too and is updated with the image.
+`karotto update` installs the newest release your server supports (see
+[Releases and compatibility](#releases-and-compatibility)), stepping back to an
+older one if the server is behind. Interactive commands mention when a fitting
+release is out, checking GitHub at most once a day; `KAROTTO_NO_UPDATE_CHECK=1`
+silences that. Install it somewhere you own, like `~/.local/bin`, so it can
+update itself; a system-wide copy needs `sudo karotto update`. The Docker image
+ships it too and is updated with the image.
 
 ```sh
 karotto login --url https://karotto.example.ts.net -u max   # stores a token in ~/.config/karotto
@@ -252,6 +256,35 @@ Plain `http://<machine>:3000` on the LAN works too, but sends passwords and
 session cookies unencrypted. Only do that on a network you trust; see
 [Plain HTTP on the LAN](docs/DEPLOY.md#plain-http-on-the-lan).
 
+
+## Releases and compatibility
+
+Server, CLI and Android app release independently, each from its own tag:
+
+| Tag | Builds | Version from |
+|---|---|---|
+| `server-v*` | Docker image (server and web UI) | `packages/server/package.json` |
+| `cli-v*` | Standalone `karotto`, `cli-latest` | `packages/cli/package.json` |
+| `android-v*` | Signed APK | the tag |
+
+Bump the package version, merge, then tag, e.g.
+`git tag cli-v0.4.1 && git push origin cli-v0.4.1`. A workflow refuses a tag
+that does not match its package.
+
+They stay compatible through the API revision in
+`packages/core/src/api-revision.json`, not through version numbers. The
+revision goes up whenever the API gains something; breaking changes need a new
+`/api/v2` instead. The server sends its revision on every response
+(`X-Karotto-Api-Revision`), and every client build records the revision it was
+built against as the minimum it needs. A client that finds an older server
+says so instead of having new fields silently ignored, and `karotto update`
+only installs builds the server supports.
+
+A server test fingerprints the generated OpenAPI spec, ignoring descriptions
+and summaries. When it fails, the API changed: bump `revision` and paste the
+new fingerprint from the failure message. Changes that leave the API alone
+need no revision bump, so a server release does not make clients update, and a
+client release does not need a server deploy.
 
 ## Credits
 

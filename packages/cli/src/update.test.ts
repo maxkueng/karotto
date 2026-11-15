@@ -24,9 +24,11 @@ import {
 import {
   compareVersions,
   installUpdate,
+  knownReleases,
+  planUpdate,
   updateNotice,
 } from '@/update';
-import type { Latest } from '@/update';
+import type { Release } from '@/update';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -38,9 +40,20 @@ function sha256(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
 
+function release(
+  version: string,
+  requiresApi: number,
+): Release {
+  return {
+    version,
+    requiresApi,
+    sha256: sha256(executableReporting(version)),
+  };
+}
+
 const published = {
-  binary: executableReporting('9.9.9'),
-  latest: null as string | null,
+  releases: null as Release[] | null,
+  binaries: new Map<string, string>(),
   requests: 0,
 };
 
@@ -54,12 +67,13 @@ beforeAll(async () => {
     response,
   ) => {
     published.requests += 1;
-    if (request.url === '/latest.json' && published.latest !== null) {
-      response.end(published.latest);
+    const version = /^\/cli-v(\d+\.\d+\.\d+)\/karotto$/.exec(request.url ?? '')?.[1];
+    if (request.url === '/cli-latest/releases.json' && published.releases !== null) {
+      response.end(JSON.stringify(published.releases));
       return;
     }
-    if (request.url === '/karotto') {
-      response.end(published.binary);
+    if (version) {
+      response.end(published.binaries.get(version) ?? executableReporting(version));
       return;
     }
     response.statusCode = 404;
@@ -86,11 +100,17 @@ beforeEach(() => {
     directory,
     'cache',
   );
-  published.binary = executableReporting('9.9.9');
-  published.latest = JSON.stringify({
-    version: '9.9.9',
-    sha256: sha256(published.binary),
-  });
+  published.releases = [
+    release(
+      '0.4.0',
+      1,
+    ),
+    release(
+      '0.5.0',
+      2,
+    ),
+  ];
+  published.binaries.clear();
   published.requests = 0;
 });
 
@@ -133,6 +153,121 @@ describe(
 );
 
 describe(
+  'planUpdate',
+  () => {
+    const releases = [
+      release(
+        '0.4.0',
+        1,
+      ),
+      release(
+        '0.4.1',
+        1,
+      ),
+      release(
+        '0.5.0',
+        2,
+      ),
+    ];
+
+    it(
+      'offers the newest release when the server supports it',
+      () => {
+        expect(planUpdate(
+          releases,
+          {
+            version: '0.4.0',
+            requiresApi: 1,
+          },
+          2,
+        )).toMatchObject({
+          action: 'install',
+          release: { version: '0.5.0' },
+          downgrade: false,
+        });
+      },
+    );
+
+    it(
+      'skips releases that need a newer server',
+      () => {
+        expect(planUpdate(
+          releases,
+          {
+            version: '0.4.0',
+            requiresApi: 1,
+          },
+          1,
+        )).toMatchObject({
+          action: 'install',
+          release: { version: '0.4.1' },
+        });
+      },
+    );
+
+    it(
+      'stays put when nothing newer fits',
+      () => {
+        expect(planUpdate(
+          releases,
+          {
+            version: '0.4.1',
+            requiresApi: 1,
+          },
+          1,
+        )).toEqual({ action: 'current' });
+      },
+    );
+
+    it(
+      'steps back when this build needs a newer server',
+      () => {
+        expect(planUpdate(
+          releases,
+          {
+            version: '0.5.0',
+            requiresApi: 2,
+          },
+          1,
+        )).toMatchObject({
+          action: 'install',
+          release: { version: '0.4.1' },
+          downgrade: true,
+        });
+      },
+    );
+
+    it(
+      'reports a server older than every release',
+      () => {
+        expect(planUpdate(
+          releases.filter((candidate) => candidate.requiresApi > 1),
+          {
+            version: '0.5.0',
+            requiresApi: 2,
+          },
+          1,
+        )).toEqual({ action: 'unsupported_server' });
+      },
+    );
+
+    it(
+      'takes the newest release when there is no server to ask',
+      () => {
+        expect(planUpdate(
+          releases,
+          {
+            version: '0.4.0',
+            requiresApi: 1,
+          },
+          null,
+        )).toMatchObject({ release: { version: '0.5.0' } });
+      },
+    );
+  },
+);
+
+describe(
   'installUpdate',
   () => {
     function installed(): string {
@@ -142,18 +277,18 @@ describe(
       );
       writeFileSync(
         target,
-        executableReporting('0.3.4'),
+        executableReporting('0.4.0'),
         { mode: 0o755 },
       );
       return target;
     }
 
-    function latest(overrides: Partial<Latest> = {}): Latest {
-      return {
-        version: '9.9.9',
-        sha256: sha256(published.binary),
-        ...overrides,
-      };
+    function expectUntouched(target: string): void {
+      expect(readFileSync(
+        target,
+        'utf8',
+      )).toBe(executableReporting('0.4.0'));
+      expect(readdirSync(directory)).toEqual(['karotto']);
     }
 
     it(
@@ -161,14 +296,17 @@ describe(
       async () => {
         const target = installed();
         await installUpdate(
-          latest(),
+          release(
+            '0.5.0',
+            2,
+          ),
           target,
           baseUrl,
         );
         expect(readFileSync(
           target,
           'utf8',
-        )).toBe(published.binary);
+        )).toBe(executableReporting('0.5.0'));
         expect(readdirSync(directory)).toEqual(['karotto']);
       },
     );
@@ -178,14 +316,17 @@ describe(
       async () => {
         const target = installed();
         await expect(installUpdate(
-          latest({ sha256: '0'.repeat(64) }),
+          {
+            ...release(
+              '0.5.0',
+              2,
+            ),
+            sha256: '0'.repeat(64),
+          },
           target,
           baseUrl,
         )).rejects.toMatchObject({ code: 'checksum_mismatch' });
-        expect(readFileSync(
-          target,
-          'utf8',
-        )).toBe(executableReporting('0.3.4'));
+        expectUntouched(target);
       },
     );
 
@@ -193,16 +334,23 @@ describe(
       'keeps the old executable when the download reports another version',
       async () => {
         const target = installed();
+        const wrongBuild = executableReporting('0.6.6');
+        published.binaries.set(
+          '0.5.0',
+          wrongBuild,
+        );
         await expect(installUpdate(
-          latest({ version: '9.9.10' }),
+          {
+            ...release(
+              '0.5.0',
+              2,
+            ),
+            sha256: sha256(wrongBuild),
+          },
           target,
           baseUrl,
         )).rejects.toMatchObject({ code: 'update_mismatch' });
-        expect(readFileSync(
-          target,
-          'utf8',
-        )).toBe(executableReporting('0.3.4'));
-        expect(readdirSync(directory)).toEqual(['karotto']);
+        expectUntouched(target);
       },
     );
 
@@ -215,7 +363,10 @@ describe(
           0o500,
         );
         await expect(installUpdate(
-          latest(),
+          release(
+            '0.5.0',
+            2,
+          ),
           target,
           baseUrl,
         )).rejects.toMatchObject({ code: 'not_writable' });
@@ -225,45 +376,22 @@ describe(
 );
 
 describe(
-  'updateNotice',
+  'knownReleases',
   () => {
     it(
-      'announces a newer release',
-      async () => {
-        await expect(updateNotice(
-          '0.3.4',
-          baseUrl,
-        )).resolves.toContain('karotto 9.9.9 is available');
-      },
-    );
-
-    it(
-      'stays quiet when up to date',
-      async () => {
-        await expect(updateNotice(
-          '9.9.9',
-          baseUrl,
-        )).resolves.toBeNull();
-      },
-    );
-
-    it(
-      'checks at most once a day',
+      'fetches at most once a day',
       async () => {
         const now = Date.now();
-        await updateNotice(
-          '0.3.4',
+        await knownReleases(
           baseUrl,
           now,
         );
-        await updateNotice(
-          '0.3.4',
+        await knownReleases(
           baseUrl,
           now + DAY_MS - 1,
         );
         expect(published.requests).toBe(1);
-        await updateNotice(
-          '0.3.4',
+        await knownReleases(
           baseUrl,
           now + DAY_MS,
         );
@@ -272,20 +400,76 @@ describe(
     );
 
     it(
-      'keeps the last known release when a check fails',
+      'keeps the last known list when a fetch fails',
       async () => {
         const now = Date.now();
-        await updateNotice(
-          '0.3.4',
+        await knownReleases(
           baseUrl,
           now,
         );
-        published.latest = null;
-        await expect(updateNotice(
-          '0.3.4',
+        published.releases = null;
+        await expect(knownReleases(
           baseUrl,
           now + DAY_MS,
-        )).resolves.toContain('karotto 9.9.9 is available');
+        )).resolves.toHaveLength(2);
+      },
+    );
+  },
+);
+
+describe(
+  'updateNotice',
+  () => {
+    const releases = [
+      release(
+        '0.4.0',
+        1,
+      ),
+      release(
+        '0.5.0',
+        2,
+      ),
+    ];
+
+    it(
+      'announces a newer release the server supports',
+      () => {
+        expect(updateNotice(
+          releases,
+          {
+            version: '0.4.0',
+            requiresApi: 1,
+          },
+          2,
+        )).toContain('karotto 0.5.0 is available');
+      },
+    );
+
+    it(
+      'stays quiet about releases the server cannot serve',
+      () => {
+        expect(updateNotice(
+          releases,
+          {
+            version: '0.4.0',
+            requiresApi: 1,
+          },
+          1,
+        )).toBeNull();
+      },
+    );
+
+    it(
+      'leaves downgrades to the server warning',
+      () => {
+        expect(updateNotice(
+          releases,
+          {
+            version: '0.5.0',
+            requiresApi: 2,
+          },
+          1,
+        )).toBeNull();
       },
     );
   },

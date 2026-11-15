@@ -1,3 +1,9 @@
+import { createHash } from 'node:crypto';
+import {
+  API_OPENAPI_SHA256,
+  API_REVISION,
+  API_REVISION_HEADER,
+} from '@karotto/core';
 import type { FastifyInstance } from 'fastify';
 import {
   afterAll,
@@ -1152,6 +1158,78 @@ describe(
         ]);
         expect(closed).toBe(true);
         await reader.cancel().catch(() => undefined);
+      },
+    );
+  },
+);
+
+function withoutProse(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(withoutProse);
+  }
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+  return Object.fromEntries(Object.entries(value)
+    .filter(([key]) => !PROSE_KEYS.has(key))
+    .sort((
+      [a],
+      [b],
+    ) => a.localeCompare(b))
+    .map(([
+      key,
+      child,
+    ]) => [
+      key,
+      withoutProse(child),
+    ]));
+}
+
+const PROSE_KEYS = new Set([
+  'description',
+  'summary',
+  'example',
+  'examples',
+  'info',
+  'tags',
+]);
+
+describe(
+  'api revision',
+  () => {
+    it(
+      'is sent on every response, errors included',
+      async () => {
+        const health = await app.inject({
+          method: 'GET',
+          url: `${API_PREFIX}/health`,
+        });
+        const unauthorized = await app.inject({
+          method: 'GET',
+          url: `${API_PREFIX}/tasks`,
+        });
+        expect(unauthorized.statusCode).toBe(401);
+        for (const response of [
+          health,
+          unauthorized,
+        ]) {
+          expect(response.headers[API_REVISION_HEADER]).toBe(String(API_REVISION));
+        }
+      },
+    );
+
+    it(
+      'changes whenever the API does',
+      async () => {
+        const spec = (await app.inject({
+          method: 'GET',
+          url: `${API_PREFIX}/openapi.json`,
+        })).json<unknown>();
+        const fingerprint = createHash('sha256').update(JSON.stringify(withoutProse(spec))).digest('hex');
+        expect(
+          fingerprint,
+          `The API changed. Bump "revision" in packages/core/src/api-revision.json and set "openapiSha256" to ${fingerprint}`,
+        ).toBe(API_OPENAPI_SHA256);
       },
     );
   },

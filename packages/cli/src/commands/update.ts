@@ -1,5 +1,10 @@
+import { API_REVISION } from '@karotto/core';
 import type { Argv } from 'yargs';
-import { CliError } from '@/client';
+import {
+  ApiClient,
+  CliError,
+} from '@/client';
+import { resolveConnection } from '@/config';
 import type { Globals } from '@/context';
 import {
   fail,
@@ -7,13 +12,13 @@ import {
 } from '@/output';
 import type { Output } from '@/output';
 import {
-  availableMessage,
-  compareVersions,
-  fetchLatest,
+  fetchReleases,
   installPath,
   installUpdate,
+  planUpdate,
   writeCheckCache,
 } from '@/update';
+import type { Plan } from '@/update';
 import {
   standalone,
   version,
@@ -23,13 +28,13 @@ export function registerUpdate(parser: Argv<Globals>): Argv<Globals> {
   return parser
     .command(
       'update',
-      'Replace this karotto executable with the newest release',
+      'Install the newest karotto release that works with your server',
       (cmd) => cmd.option(
         'check',
         {
           type: 'boolean',
           default: false,
-          describe: 'Only report whether an update is available',
+          describe: 'Only report what an update would do',
         },
       ),
       async (argv) => {
@@ -37,6 +42,7 @@ export function registerUpdate(parser: Argv<Globals>): Argv<Globals> {
         try {
           await update(
             output,
+            argv.url,
             argv.check,
           );
         } catch (error) {
@@ -51,6 +57,7 @@ export function registerUpdate(parser: Argv<Globals>): Argv<Globals> {
 
 async function update(
   output: Output,
+  url: string | undefined,
   checkOnly: boolean,
 ): Promise<void> {
   if (!standalone) {
@@ -60,44 +67,93 @@ async function update(
       2,
     );
   }
-  const latest = await fetchLatest();
+  const serverRevision = await askServerRevision(url);
+  const releases = await fetchReleases();
   writeCheckCache({
     checkedAt: Date.now(),
-    latestVersion: latest.version,
+    releases,
   });
-  const available = compareVersions(
-    latest.version,
-    version,
-  ) > 0;
-  if (!available || checkOnly) {
+  const plan = planUpdate(
+    releases,
+    {
+      version,
+      requiresApi: API_REVISION,
+    },
+    serverRevision,
+  );
+  if (plan.action === 'unsupported_server') {
+    throw new CliError(
+      'unsupported_server',
+      `No karotto release works with this server (API revision ${serverRevision}); the server needs an update`,
+    );
+  }
+  if (plan.action === 'current' || checkOnly) {
     print(
       output,
-      {
-        current: version,
-        latest: latest.version,
-        updateAvailable: available,
-      },
-      () => (available
-        ? availableMessage(
-            latest.version,
-            version,
-          )
-        : `karotto ${version} is up to date`),
+      describe(
+        plan,
+        serverRevision,
+      ),
+      () => checkMessage(
+        plan,
+        serverRevision,
+      ),
     );
     return;
   }
   const target = installPath();
   await installUpdate(
-    latest,
+    plan.release,
     target,
   );
   print(
     output,
     {
-      previous: version,
-      current: latest.version,
+      ...describe(
+        plan,
+        serverRevision,
+      ),
       path: target,
     },
-    () => `Updated karotto ${version} -> ${latest.version} (${target})`,
+    () => `${plan.downgrade ? 'Downgraded' : 'Updated'} karotto ${version} -> ${plan.release.version} (${target})`,
   );
+}
+
+/** No configured server means nothing to stay compatible with. */
+async function askServerRevision(url: string | undefined): Promise<number | null> {
+  const connection = resolveConnection(url);
+  if (!connection.url) {
+    return null;
+  }
+  const api = new ApiClient(
+    connection.url,
+    connection.token,
+  );
+  await api.get('/health');
+  return api.serverRevision;
+}
+
+function describe(
+  plan: Plan,
+  serverRevision: number | null,
+) {
+  return {
+    current: version,
+    serverApiRevision: serverRevision,
+    action: plan.action === 'install' ? (plan.downgrade ? 'downgrade' : 'update') : 'none',
+    target: plan.action === 'install' ? plan.release.version : null,
+  };
+}
+
+function checkMessage(
+  plan: Plan,
+  serverRevision: number | null,
+): string {
+  const server = serverRevision === null ? '' : ' for this server';
+  if (plan.action !== 'install') {
+    return `karotto ${version} is up to date${server}`;
+  }
+  return plan.downgrade
+    ? `This karotto needs a newer server than API revision ${serverRevision}; karotto ${plan.release.version} is the newest release that fits it. Run \`karotto update\` to switch.`
+    : `karotto ${plan.release.version} is available${server} (you have ${version}). Run \`karotto update\`.`;
 }

@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { CliError } from '@/client';
 import { standalone } from '@/version';
 
-export const RELEASE_URL = 'https://github.com/maxkueng/karotto/releases/download/cli-latest';
+export const RELEASES_URL = 'https://github.com/maxkueng/karotto/releases/download';
 
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const NOTICE_TIMEOUT_MS = 1500;
@@ -30,17 +30,34 @@ const COMMANDS_WITHOUT_NOTICE = [
   'update',
 ];
 
-const latestSchema = z.object({
+const releaseSchema = z.object({
   version: z.string().regex(/^\d+\.\d+\.\d+$/),
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  requiresApi: z.number().int().positive(),
 });
-export type Latest = z.infer<typeof latestSchema>;
+export type Release = z.infer<typeof releaseSchema>;
+
+const releasesSchema = z.array(releaseSchema);
 
 const checkCacheSchema = z.object({
   checkedAt: z.number(),
-  latestVersion: z.string().nullable(),
+  releases: releasesSchema.nullable(),
 });
 type CheckCache = z.infer<typeof checkCacheSchema>;
+
+export type Build = {
+  version: string;
+  requiresApi: number;
+};
+
+export type Plan
+  = | {
+    action: 'install';
+    release: Release;
+    downgrade: boolean;
+  }
+  | { action: 'current' }
+  | { action: 'unsupported_server' };
 
 export function compareVersions(
   a: string,
@@ -57,6 +74,45 @@ export function compareVersions(
   return 0;
 }
 
+/** A null server revision means no server to ask, so any release fits. */
+export function planUpdate(
+  releases: Release[],
+  current: Build,
+  serverRevision: number | null,
+): Plan {
+  const fits = (requiresApi: number) => serverRevision === null || requiresApi <= serverRevision;
+  const best = releases
+    .filter((release) => fits(release.requiresApi))
+    .reduce<Release | null>(
+      (
+        newest,
+        release,
+      ) => (newest === null || compareVersions(
+        release.version,
+        newest.version,
+      ) > 0
+        ? release
+        : newest),
+      null,
+    );
+  const currentFits = fits(current.requiresApi);
+  if (best === null) {
+    return currentFits ? { action: 'current' } : { action: 'unsupported_server' };
+  }
+  const order = compareVersions(
+    best.version,
+    current.version,
+  );
+  if (order > 0 || (order < 0 && !currentFits)) {
+    return {
+      action: 'install',
+      release: best,
+      downgrade: order < 0,
+    };
+  }
+  return { action: 'current' };
+}
+
 export function availableMessage(
   latestVersion: string,
   current: string,
@@ -64,19 +120,19 @@ export function availableMessage(
   return `karotto ${latestVersion} is available (you have ${current}). Run \`karotto update\`.`;
 }
 
-export async function fetchLatest(
-  baseUrl = RELEASE_URL,
+export async function fetchReleases(
+  baseUrl = RELEASES_URL,
   timeoutMs = 10_000,
-): Promise<Latest> {
+): Promise<Release[]> {
   const response = await download(
-    `${baseUrl}/latest.json`,
+    `${baseUrl}/cli-latest/releases.json`,
     timeoutMs,
   );
-  const parsed = latestSchema.safeParse(await response.json().catch(() => null));
+  const parsed = releasesSchema.safeParse(await response.json().catch(() => null));
   if (!parsed.success) {
     throw new CliError(
       'update_check_failed',
-      'The published latest.json is malformed',
+      'The published releases.json is malformed',
     );
   }
   return parsed.data;
@@ -88,18 +144,18 @@ export function installPath(): string {
 
 /** Stages the new file next to the target so the final rename is atomic. */
 export async function installUpdate(
-  latest: Latest,
+  release: Release,
   target: string,
-  baseUrl = RELEASE_URL,
+  baseUrl = RELEASES_URL,
 ): Promise<void> {
   const directory = dirname(target);
   assertWritable(directory);
   const response = await download(
-    `${baseUrl}/karotto`,
+    `${baseUrl}/cli-v${release.version}/karotto`,
     60_000,
   );
   const body = Buffer.from(await response.arrayBuffer());
-  if (createHash('sha256').update(body).digest('hex') !== latest.sha256) {
+  if (createHash('sha256').update(body).digest('hex') !== release.sha256) {
     throw new CliError(
       'checksum_mismatch',
       'The download does not match the published checksum; nothing was changed',
@@ -123,10 +179,10 @@ export async function installUpdate(
       ],
       { encoding: 'utf8' },
     ).trim();
-    if (reported !== latest.version) {
+    if (reported !== release.version) {
       throw new CliError(
         'update_mismatch',
-        `The download reports version ${reported}, expected ${latest.version}; nothing was changed`,
+        `The download reports version ${reported}, expected ${release.version}; nothing was changed`,
       );
     }
     renameSync(
@@ -152,32 +208,41 @@ export function wantsUpdateNotice(args: string[]): boolean {
     && !COMMANDS_WITHOUT_NOTICE.includes(command);
 }
 
-/** Checks at most once per interval; a failed check keeps the last known version. */
-export async function updateNotice(
-  current: string,
-  baseUrl = RELEASE_URL,
+/** Fetches at most once per interval; a failed fetch keeps the last known list. */
+export async function knownReleases(
+  baseUrl = RELEASES_URL,
   now = Date.now(),
-): Promise<string | null> {
+): Promise<Release[] | null> {
   const cached = readCheckCache();
-  let latestVersion = cached?.latestVersion ?? null;
-  if (!cached || now - cached.checkedAt >= CHECK_INTERVAL_MS) {
-    const latest = await fetchLatest(
-      baseUrl,
-      NOTICE_TIMEOUT_MS,
-    ).catch(() => null);
-    latestVersion = latest?.version ?? latestVersion;
-    writeCheckCache({
-      checkedAt: now,
-      latestVersion,
-    });
+  if (cached && now - cached.checkedAt < CHECK_INTERVAL_MS) {
+    return cached.releases;
   }
-  return latestVersion && compareVersions(
-    latestVersion,
+  const fetched = await fetchReleases(
+    baseUrl,
+    NOTICE_TIMEOUT_MS,
+  ).catch(() => null);
+  const releases = fetched ?? cached?.releases ?? null;
+  writeCheckCache({
+    checkedAt: now,
+    releases,
+  });
+  return releases;
+}
+
+export function updateNotice(
+  releases: Release[],
+  current: Build,
+  serverRevision: number,
+): string | null {
+  const plan = planUpdate(
+    releases,
     current,
-  ) > 0
+    serverRevision,
+  );
+  return plan.action === 'install' && !plan.downgrade
     ? availableMessage(
-        latestVersion,
-        current,
+        plan.release.version,
+        current.version,
       )
     : null;
 }

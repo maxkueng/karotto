@@ -1,3 +1,4 @@
+import { API_REVISION } from '@karotto/core';
 import yargs from 'yargs';
 import type { Argv } from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -14,15 +15,17 @@ import { registerUpdate } from '@/commands/update';
 import type { Globals } from '@/context';
 import { fail } from '@/output';
 import type { Output } from '@/output';
+import { observedServerRevision } from '@/server-revision';
 import {
+  knownReleases,
   updateNotice,
   wantsUpdateNotice,
 } from '@/update';
 import { version } from '@/version';
 
 const args = hideBin(process.argv);
-const notice = wantsUpdateNotice(args)
-  ? updateNotice(version).catch(() => null)
+const releases = wantsUpdateNotice(args)
+  ? knownReleases().catch(() => null)
   : Promise.resolve(null);
 
 const parser: Argv<Globals> = yargs(args)
@@ -98,7 +101,18 @@ await registered
   ))
   .parseAsync();
 
-const message = await notice;
-if (message) {
-  process.stderr.write(`\n${message}\n`);
+const known = await releases;
+const serverRevision = observedServerRevision();
+const notice = known && serverRevision !== null
+  ? updateNotice(
+      known,
+      {
+        version,
+        requiresApi: API_REVISION,
+      },
+      serverRevision,
+    )
+  : null;
+if (notice) {
+  process.stderr.write(`\n${notice}\n`);
 }

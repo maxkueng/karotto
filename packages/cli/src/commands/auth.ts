@@ -23,6 +23,7 @@ import {
   table,
 } from '@/output';
 import type { Output } from '@/output';
+import { observeServerRevision } from '@/server-revision';
 
 export function registerAuth(parser: Argv<Globals>): Argv<Globals> {
   return parser
@@ -79,6 +80,10 @@ export function registerAuth(parser: Argv<Globals>): Argv<Globals> {
           const api = new ApiClient(
             url,
             null,
+            (revision) => observeServerRevision(
+              revision,
+              { json: argv.json },
+            ),
           );
           const created = await api.post<{ token: string }>(
             '/auth/token',

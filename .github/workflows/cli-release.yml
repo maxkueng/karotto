@@ -3,10 +3,14 @@ name: CLI release
 on:
   push:
     tags:
-      - "v*"
+      - "cli-v*"
 
 permissions:
   contents: write
+
+concurrency:
+  group: cli-latest
+  cancel-in-progress: false
 
 jobs:
   standalone:
@@ -22,7 +26,7 @@ jobs:
       - name: Tag matches package version
         run: |
           version="$(node -p 'require("./packages/cli/package.json").version')"
-          [[ "v$version" == "$GITHUB_REF_NAME" ]] || { echo "::error::tag $GITHUB_REF_NAME but packages/cli is $version"; exit 1; }
+          [[ "cli-v$version" == "$GITHUB_REF_NAME" ]] || { echo "::error::tag $GITHUB_REF_NAME but packages/cli is $version"; exit 1; }
 
       - run: npm ci
 
@@ -31,34 +35,31 @@ jobs:
       - name: Smoke test
         run: |
           mkdir "$RUNNER_TEMP/bare" && cp packages/cli/dist/standalone/karotto "$RUNNER_TEMP/bare/"
-          cd "$RUNNER_TEMP/bare" && [[ "$(./karotto --version)" == "${GITHUB_REF_NAME#v}" ]]
+          cd "$RUNNER_TEMP/bare" && [[ "$(./karotto --version)" == "${GITHUB_REF_NAME#cli-v}" ]]
+
+      - name: Add this build to the release manifest
+        working-directory: packages/cli/dist/standalone
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download cli-latest --repo "$GITHUB_REPOSITORY" --pattern releases.json || echo '[]' >releases.json
+          node ../../../../.github/scripts/cli-manifest.mjs releases.json karotto ../../../core/src/api-revision.json "${GITHUB_REF_NAME#cli-v}"
+          cat releases.json
 
       - uses: softprops/action-gh-release@v2
         with:
-          name: karotto ${{ github.ref_name }}
+          name: karotto CLI ${{ github.ref_name }}
           files: packages/cli/dist/standalone/karotto
           generate_release_notes: true
           make_latest: "false"
-
-      - name: Describe the release for karotto update
-        run: |
-          node -e '
-            const { createHash } = require("node:crypto");
-            const { readFileSync, writeFileSync } = require("node:fs");
-            const binary = "packages/cli/dist/standalone/karotto";
-            writeFileSync("packages/cli/dist/standalone/latest.json", JSON.stringify({
-              version: process.env.GITHUB_REF_NAME.slice(1),
-              sha256: createHash("sha256").update(readFileSync(binary)).digest("hex"),
-            }));
-          '
 
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: cli-latest
           name: karotto CLI (latest)
-          body: Rolling copy of the `karotto` client from the newest `v*` release, currently ${{ github.ref_name }}.
+          body: Newest `karotto` client, currently ${{ github.ref_name }}, and `releases.json`, which `karotto update` reads to pick the newest build your server supports.
           files: |
             packages/cli/dist/standalone/karotto
-            packages/cli/dist/standalone/latest.json
+            packages/cli/dist/standalone/releases.json
           prerelease: true
           make_latest: "false"

@@ -1,3 +1,7 @@
+import {
+  API_REVISION_HEADER,
+  BASELINE_API_REVISION,
+} from '@karotto/core';
 import type { ApiErrorBody } from '@karotto/core';
 
 export class CliError extends Error {
@@ -24,9 +28,12 @@ export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 const CLIENT_ID = `karotto-cli-${process.pid}`;
 
 export class ApiClient {
+  serverRevision: number | null = null;
+
   constructor(
     private readonly baseUrl: string,
     private readonly token: string | null,
+    private readonly onServerRevision?: (revision: number) => void,
   ) {}
 
   url(path: string): string {
@@ -74,6 +81,7 @@ export class ApiClient {
         3,
       );
     }
+    this.recordServerRevision(response);
     const text = await response.text();
     const json: unknown = text ? JSON.parse(text) : null;
     if (!response.ok) {
@@ -88,6 +96,17 @@ export class ApiClient {
       );
     }
     return json as T;
+  }
+
+  /** Only a successful answer without the header is trusted to come from an older karotto, not a proxy. */
+  private recordServerRevision(response: Response): void {
+    const header = Number(response.headers.get(API_REVISION_HEADER) ?? Number.NaN);
+    const revision = Number.isInteger(header) ? header : (response.ok ? BASELINE_API_REVISION : null);
+    if (revision === null) {
+      return;
+    }
+    this.serverRevision = revision;
+    this.onServerRevision?.(revision);
   }
 
   get<T>(path: string): Promise<T> {
