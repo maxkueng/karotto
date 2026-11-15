@@ -1,6 +1,6 @@
 {
   "name": "@karotto/cli",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "description": "karotto: command-line client for the karotto API",
   "type": "module",
   "private": true,
