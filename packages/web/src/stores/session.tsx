@@ -25,7 +25,7 @@ import {
   onUnauthorized,
 } from '@/api/client';
 import { browserTimezone } from '@/lib/dates';
-import { takeHashToken } from '@/lib/hashToken';
+import { takeHashParam } from '@/lib/hash';
 import { useNotifications } from '@/stores/notifications';
 
 export type SessionStatus = 'loading' | 'anonymous' | 'authenticated';
@@ -110,7 +110,7 @@ export const SessionProvider: ParentComponent<SessionProviderProps> = (props) =>
   };
 
   const exchangeHashToken = async () => {
-    const token = takeHashToken();
+    const token = takeHashParam('token');
     if (!token) {
       return;
     }

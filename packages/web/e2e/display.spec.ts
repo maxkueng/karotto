@@ -54,3 +54,30 @@ test(
     expect(preferenceWrites).toEqual([]);
   },
 );
+
+test(
+  'takes theme and mode from the URL hash and keeps them',
+  async ({ page }) => {
+    await page.goto('/login#theme=nord&mode=dark&theme_typo=x');
+    const root = page.locator('html');
+    await expect(root).toHaveAttribute(
+      'data-theme',
+      'nord',
+    );
+    await expect(root).toHaveAttribute(
+      'data-mode',
+      'dark',
+    );
+    expect(new URL(page.url()).hash).toBe('#theme_typo=x');
+
+    await page.goto('/login#theme=nope&mode=sepia');
+    await expect(root).toHaveAttribute(
+      'data-theme',
+      'nord',
+    );
+    await expect(root).toHaveAttribute(
+      'data-mode',
+      'dark',
+    );
+  },
+);

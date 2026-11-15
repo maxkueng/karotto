@@ -212,7 +212,11 @@ Every client takes the URL you chose above.
   reloading the start URL swaps it again and replaces the old session.
   Revoking the token logs the tablet out. The fragment is never sent to the server, so the token
   stays out of proxy logs, but it is readable by anyone with access to the
-  kiosk's configuration.
+  kiosk's configuration. Add `&theme=<id>&mode=light|dark|system` to set the
+  device's theme as if chosen in Settings, for example
+  `/display#token=krt_…&theme=nord&mode=dark`. Theme ids: `carrot`,
+  `classic`, `tokyo-night`, `synthwave`, `catppuccin`, `nord`, `gruvbox`,
+  `solarized`.
 
 ## Build it yourself
 

@@ -14,6 +14,7 @@ import {
   createRoot,
   createSignal,
 } from 'solid-js';
+import { takeHashParam } from '@/lib/hash';
 
 export type ModePreference = 'system' | 'light' | 'dark';
 
@@ -113,6 +114,17 @@ export function initTheme(): void {
       modePreference(),
     ));
   });
+}
+
+export function applyHashTheme(): void {
+  const id = takeHashParam('theme');
+  if (id !== null && findTheme(id).id === id) {
+    setThemeId(id);
+  }
+  const mode = takeHashParam('mode');
+  if (isModePreference(mode)) {
+    setModePreference(mode);
+  }
 }
 
 export function resetTheme(): void {
