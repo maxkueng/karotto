@@ -244,6 +244,10 @@ docker compose exec app karotto-admin user create max --timezone Europe/Zurich
 Requirements, configuration, backups, updates and how to reach it over
 Tailscale or a reverse proxy: [docs/DEPLOY.md](docs/DEPLOY.md).
 
+Plain `http://<machine>:3000` on the LAN works too, but sends passwords and
+session cookies unencrypted. Only do that on a network you trust; see
+[Plain HTTP on the LAN](docs/DEPLOY.md#plain-http-on-the-lan).
+
 
 ## Credits
 

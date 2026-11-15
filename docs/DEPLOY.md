@@ -180,7 +180,13 @@ karotto.example.com {
 
 For testing, or a network you trust, keep the defaults
 (`KAROTTO_BIND=0.0.0.0`, `SECURE_COOKIES=false`) and use
-`http://<machine>:3000`. Do not do this on a network you do not control.
+`http://<machine>:3000`. This is enough for a household chore board on a
+wall tablet that cannot join a tailnet.
+
+Without TLS, passwords and the session cookie cross the network in clear
+text, and anyone on it can read them and take over the session. Do not do
+this on a network you do not control, and do not forward the port to the
+internet.
 
 ## 7. Clients
 
