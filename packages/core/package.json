@@ -1,6 +1,6 @@
 {
   "name": "@karotto/core",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Shared schemas and domain logic for karotto",
   "type": "module",
   "private": true,
