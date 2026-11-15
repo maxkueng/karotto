@@ -1,5 +1,6 @@
 import { CLIENT_ID_HEADER } from '@karotto/core';
 import type { ApiErrorBody } from '@karotto/core';
+import { newId } from '@/lib/ids';
 
 export class ApiRequestError extends Error {
   readonly status: number;
@@ -25,7 +26,7 @@ export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 export const BASE = '/api/v1';
 
 /** Identifies this tab so its own changes can be told apart on the event stream. */
-export const CLIENT_ID = crypto.randomUUID();
+export const CLIENT_ID = newId();
 
 const unauthorizedListeners = new Set<() => void>();
 
