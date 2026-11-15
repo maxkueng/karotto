@@ -1,6 +1,6 @@
 {
   "name": "@karotto/server",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "karotto API server",
   "type": "module",
   "private": true,
