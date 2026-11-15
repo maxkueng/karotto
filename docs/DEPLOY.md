@@ -202,6 +202,21 @@ Every client takes the URL you chose above.
 - **Home Assistant:** add the Karotto integration with the URL and your
   credentials. See `docs/HOME_ASSISTANT.md`; on Home Assistant OS with
   Tailscale the Supervisor DNS needs to resolve `*.ts.net` names.
+- **Kiosk tablet** (Fully Kiosk Browser and similar): create a token with
+  `karotto-admin token create <username> --name kiosk` or in Settings, and
+  set the start URL to `<url>/display#token=krt_…`. `/display` is the board
+  without navigation, search, quick add or editing: the three columns fill the
+  screen and scroll on their own, tasks can still be checked off and scored,
+  and the device's timezone never overwrites yours. On load the page swaps
+  the token for a session cookie and removes it from the address bar;
+  reloading the start URL swaps it again and replaces the old session.
+  Revoking the token logs the tablet out. The fragment is never sent to the server, so the token
+  stays out of proxy logs, but it is readable by anyone with access to the
+  kiosk's configuration. Add `&theme=<id>&mode=light|dark|system` to set the
+  device's theme as if chosen in Settings, for example
+  `/display#token=krt_…&theme=nord&mode=dark`. Theme ids: `carrot`,
+  `classic`, `tokyo-night`, `synthwave`, `catppuccin`, `nord`, `gruvbox`,
+  `solarized`.
 
 ## Build it yourself
 

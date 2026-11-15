@@ -99,8 +99,9 @@ const filterOptions: { [T in TaskType]: FilterOption<T>[] } = {
 
 type TaskColumnProps = {
   type: TaskType;
-  onEdit: (task: Task) => void;
-  onDelete: (task: Task) => void;
+  display?: boolean | undefined;
+  onEdit?: ((task: Task) => void) | undefined;
+  onDelete?: ((task: Task) => void) | undefined;
 };
 
 const UNDO_MS = 6000;
@@ -249,7 +250,7 @@ export function TaskColumn(props: TaskColumnProps) {
       delayOnTouchOnly: true,
       scrollSensitivity: 64,
       ghostClass: 'task-drag-ghost',
-      disabled: isCompleteFilter() || isScheduledFilter(),
+      disabled: props.display === true || isCompleteFilter() || isScheduledFilter(),
       filter: 'button, input, a',
       preventOnFilter: false,
       onStart: () => document.documentElement.classList.add('cursor-grabbing'),
@@ -273,7 +274,10 @@ export function TaskColumn(props: TaskColumnProps) {
   );
 
   return (
-    <ColumnSection aria-label={meta().plural}>
+    <ColumnSection
+      aria-label={meta().plural}
+      display={props.display}
+    >
       <ColumnHeader>
         <Heading level="column">{meta().plural}</Heading>
         <Show when={visible().length > 0}>
@@ -294,8 +298,8 @@ export function TaskColumn(props: TaskColumnProps) {
         </FilterTabs>
       </ColumnHeader>
 
-      <TaskList>
-        <Show when={!isCompleteFilter()}>
+      <TaskList display={props.display}>
+        <Show when={!props.display && !isCompleteFilter()}>
           <QuickAddInput
             focused={quickAddFocused()}
             rows={quickAddFocused()
@@ -324,7 +328,7 @@ export function TaskColumn(props: TaskColumnProps) {
           </Show>
         </Show>
 
-        <Show when={isCompleteFilter() && visible().length > 0}>
+        <Show when={!props.display && isCompleteFilter() && visible().length > 0}>
           <ClearCompletedBox>
             <Text tone="muted">
               {`Completed To Do's are deleted after ${session.user()?.preferences.completedTodoRetentionDays ?? 'a number of'} days.`}
@@ -365,8 +369,8 @@ export function TaskColumn(props: TaskColumnProps) {
                   task,
                   direction,
                 )}
-                onEdit={() => props.onEdit(task)}
-                onDelete={() => props.onDelete(task)}
+                onEdit={props.onEdit && (() => props.onEdit?.(task))}
+                onDelete={props.onDelete && (() => props.onDelete?.(task))}
                 onMoveTop={() => moveTo(
                   task,
                   0,

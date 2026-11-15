@@ -104,11 +104,16 @@ export async function revokeApiToken(
   }
 }
 
+export type ResolvedApiToken = {
+  user: UserRow;
+  tokenId: string;
+};
+
 export async function resolveApiToken(
   db: Db,
   token: string,
   now: Date,
-): Promise<UserRow | null> {
+): Promise<ResolvedApiToken | null> {
   const [row] = await db
     .select({
       token: apiTokens,
@@ -143,5 +148,8 @@ export async function resolveApiToken(
         row.token.id,
       ));
   }
-  return row.user;
+  return {
+    user: row.user,
+    tokenId: row.token.id,
+  };
 }

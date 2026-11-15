@@ -19,6 +19,7 @@ const TOUCH_INTERVAL_MS = 60 * 60 * 1000;
 
 export type SessionCreateInput = {
   userId: string;
+  apiTokenId?: string;
   userAgent: string | null;
   ttlDays: number;
   now: Date;
@@ -32,6 +33,7 @@ export async function createSession(
   await db.insert(sessions).values({
     userId: input.userId,
     tokenHash: hashToken(token),
+    apiTokenId: input.apiTokenId ?? null,
     userAgent: input.userAgent,
     createdAt: input.now,
     lastSeenAt: input.now,

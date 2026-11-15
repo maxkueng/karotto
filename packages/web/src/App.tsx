@@ -6,10 +6,15 @@ import {
 import type { RouteSectionProps } from '@solidjs/router';
 import {
   Match,
+  Show,
   Switch,
 } from 'solid-js';
 import { Navbar } from '@/components/layout/Navbar';
 import { Snackbars } from '@/components/ui/Snackbars';
+import {
+  DISPLAY_PATH,
+  isDisplayPath,
+} from '@/lib/display';
 import { LoginPage } from '@/pages/LoginPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { TasksPage } from '@/pages/TasksPage';
@@ -40,12 +45,25 @@ const Main = twc(
     'flex',
     'flex-1',
     'flex-col',
-    'pb-8',
   ],
+  {
+    variants: {
+      display: {
+        true: [
+          'h-dvh',
+          'flex-none',
+          'overflow-hidden',
+        ],
+        false: ['pb-8'],
+      },
+    },
+    defaultVariants: { display: 'false' },
+  },
 );
 
 function Shell(props: RouteSectionProps) {
   const session = useSession();
+  const display = () => props.location.pathname === DISPLAY_PATH;
   return (
     <Switch>
       <Match when={session.status() === 'loading'}>
@@ -58,8 +76,10 @@ function Shell(props: RouteSectionProps) {
         <TagsProvider>
           <TasksProvider>
             <LiveProvider>
-              <Navbar />
-              <Main>{props.children}</Main>
+              <Show when={!display()}>
+                <Navbar />
+              </Show>
+              <Main display={display()}>{props.children}</Main>
             </LiveProvider>
           </TasksProvider>
         </TagsProvider>
@@ -82,10 +102,14 @@ function LoginRoute() {
   );
 }
 
+function DisplayPage() {
+  return <TasksPage display />;
+}
+
 export function App() {
   return (
     <NotificationsProvider>
-      <SessionProvider>
+      <SessionProvider syncTimezone={!isDisplayPath()}>
         <Snackbars />
         <Router>
           <Route
@@ -103,6 +127,10 @@ export function App() {
             <Route
               path="/settings"
               component={SettingsPage}
+            />
+            <Route
+              path={DISPLAY_PATH}
+              component={DisplayPage}
             />
           </Route>
         </Router>

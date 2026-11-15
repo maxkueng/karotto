@@ -142,10 +142,17 @@ export const CardBody = twc(
 export const ClickableArea = twc(
   'div',
   [
-    'cursor-pointer',
     'pl-3',
     'pt-1',
   ],
+  {
+    variants: {
+      clickable: {
+        true: ['cursor-pointer'],
+      },
+    },
+    defaultVariants: { clickable: 'true' },
+  },
 );
 
 export const TitleRow = twc(

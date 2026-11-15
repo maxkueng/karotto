@@ -49,7 +49,9 @@ import {
   setSearchQuery,
 } from '@/stores/ui';
 
-export function TasksPage() {
+type TasksPageProps = { display?: boolean };
+
+export function TasksPage(props: TasksPageProps) {
   const session = useSession();
   const tasks = useTasks();
   const tags = useTags();
@@ -218,6 +220,15 @@ export function TasksPage() {
     tasks.remove(task.id).catch(notifications.error);
   };
 
+  const editTask = (task: Task) => {
+    if (!isRunningYesterdailies()) {
+      setModal({
+        kind: 'edit',
+        task,
+      });
+    }
+  };
+
   const openCreate = (type: TaskType) => setModal({
     kind: 'create',
     type,
@@ -225,82 +236,80 @@ export function TasksPage() {
   });
 
   return (
-    <Page>
+    <Page display={props.display}>
       <Show when={session.user()?.preferences.paused}>
         <PausedBanner>
           <Pause size={16} />
           <span>Paused. Missed Dailies and To Do's are not penalised until you resume in Settings.</span>
         </PausedBanner>
       </Show>
-      <Toolbar
-        gap="sm"
-        justify="center"
-        wrap
-      >
-        <SearchArea>
-          <Input
-            size="sm"
-            type="search"
-            aria-label="Search tasks"
-            placeholder="Search"
-            value={searchQuery()}
-            onInput={(event) => setSearchQuery(event.currentTarget.value)}
-          />
-          <TagsButtonSlot>
-            <Button
-              layout="secondary"
-              active={selectedTagIds().length > 0 || filterOpen()}
-              aria-expanded={filterOpen()}
-              icon={<SlidersHorizontal size={16} />}
-              iconRight={<Caret />}
-              onClick={() => setFilterOpen((open) => !open)}
-            >
-              Tags
-            </Button>
-          </TagsButtonSlot>
-          <Show when={filterOpen()}>
-            <TagFilterPanel onClose={() => setFilterOpen(false)} />
-          </Show>
-        </SearchArea>
-        <CreateArea>
-          <CreateTaskMenu onSelect={openCreate} />
-        </CreateArea>
-        <CreateAreaMobile>
-          <CreateTaskMenu onSelect={openCreate} />
-        </CreateAreaMobile>
-      </Toolbar>
+      <Show when={!props.display}>
+        <Toolbar
+          gap="sm"
+          justify="center"
+          wrap
+        >
+          <SearchArea>
+            <Input
+              size="sm"
+              type="search"
+              aria-label="Search tasks"
+              placeholder="Search"
+              value={searchQuery()}
+              onInput={(event) => setSearchQuery(event.currentTarget.value)}
+            />
+            <TagsButtonSlot>
+              <Button
+                layout="secondary"
+                active={selectedTagIds().length > 0 || filterOpen()}
+                aria-expanded={filterOpen()}
+                icon={<SlidersHorizontal size={16} />}
+                iconRight={<Caret />}
+                onClick={() => setFilterOpen((open) => !open)}
+              >
+                Tags
+              </Button>
+            </TagsButtonSlot>
+            <Show when={filterOpen()}>
+              <TagFilterPanel onClose={() => setFilterOpen(false)} />
+            </Show>
+          </SearchArea>
+          <CreateArea>
+            <CreateTaskMenu onSelect={openCreate} />
+          </CreateArea>
+          <CreateAreaMobile>
+            <CreateTaskMenu onSelect={openCreate} />
+          </CreateAreaMobile>
+        </Toolbar>
+      </Show>
 
-      <ColumnGrid>
+      <ColumnGrid display={props.display}>
         <For each={taskTypeOrder}>
           {(type) => (
             <TaskColumn
               type={type}
-              onEdit={(task) => {
-                if (!isRunningYesterdailies()) {
-                  setModal({
-                    kind: 'edit',
-                    task,
-                  });
-                }
-              }}
-              onDelete={(task) => setDeleting(task)}
+              display={props.display}
+              onEdit={props.display ? undefined : editTask}
+              onDelete={props.display ? undefined : setDeleting}
             />
           )}
         </For>
       </ColumnGrid>
 
-      <TaskModal
-        mode={modal()}
-        onClose={() => setModal(null)}
-        onCreate={createOne}
-        onSave={saveOne}
-        onDelete={(task) => setDeleting(task)}
-      />
-      <DeleteConfirmModal
-        task={deleting()}
-        onCancel={() => setDeleting(null)}
-        onConfirm={confirmDelete}
-      />
+      <Show when={!props.display}>
+        <TaskModal
+          mode={modal()}
+          onClose={() => setModal(null)}
+          onCreate={createOne}
+          onSave={saveOne}
+          onDelete={(task) => setDeleting(task)}
+        />
+        <DeleteConfirmModal
+          task={deleting()}
+          onCancel={() => setDeleting(null)}
+          onConfirm={confirmDelete}
+        />
+      </Show>
       <YesterdailiesModal
         dailies={yesterdailies()}
         onStart={finishCron}

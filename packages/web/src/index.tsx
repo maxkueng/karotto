@@ -1,9 +1,13 @@
 /* @refresh reload */
 import { render } from 'solid-js/web';
 import { App } from '@/App';
-import { initTheme } from '@/stores/theme';
+import {
+  applyHashTheme,
+  initTheme,
+} from '@/stores/theme';
 import '@/index.css';
 
+applyHashTheme();
 initTheme();
 
 const root = document.getElementById('app');

@@ -39,6 +39,7 @@ export async function request<T>(
   method: Method,
   path: string,
   body?: unknown,
+  headers: Record<string, string> = {},
 ): Promise<T> {
   const response = await fetch(
     `${BASE}${path}`,
@@ -48,6 +49,7 @@ export async function request<T>(
       headers: {
         [CLIENT_ID_HEADER]: CLIENT_ID,
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        ...headers,
       },
       body: body === undefined ? null : JSON.stringify(body),
     },

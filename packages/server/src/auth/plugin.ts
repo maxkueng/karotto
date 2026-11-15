@@ -22,6 +22,7 @@ declare module 'fastify' {
   interface FastifyRequest {
     user: UserRow | null;
     authKind: AuthKind | null;
+    apiTokenId: string | null;
     sessionToken: string | null;
   }
   interface FastifyInstance {
@@ -52,6 +53,10 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (
     null,
   );
   app.decorateRequest(
+    'apiTokenId',
+    null,
+  );
+  app.decorateRequest(
     'sessionToken',
     null,
   );
@@ -66,16 +71,17 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (
         if (!token.startsWith(API_TOKEN_PREFIX)) {
           throw ApiError.unauthorized('Malformed API token');
         }
-        const user = await resolveApiToken(
+        const resolved = await resolveApiToken(
           options.db,
           token,
           now,
         );
-        if (!user) {
+        if (!resolved) {
           throw ApiError.invalidCredentials('Invalid or expired API token');
         }
-        request.user = user;
+        request.user = resolved.user;
         request.authKind = 'token';
+        request.apiTokenId = resolved.tokenId;
         return;
       }
       const cookie = request.cookies[SESSION_COOKIE];

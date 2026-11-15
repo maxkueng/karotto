@@ -4,6 +4,7 @@ import {
   API_REVISION,
   API_REVISION_HEADER,
 } from '@karotto/core';
+import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import {
   afterAll,
@@ -18,6 +19,7 @@ import {
 } from '@/app';
 import { loadConfig } from '@/config';
 import type { DbHandle } from '@/db/client';
+import { sessions } from '@/db/schema';
 import { createTestDb } from '@/db/testDb';
 import { EventHub } from '@/services/events';
 import { createUser } from '@/services/users';
@@ -841,6 +843,132 @@ describe(
         );
         expect(bad.status).toBe(401);
         cookie = saved;
+      },
+    );
+  },
+);
+
+function sessionCookieOf(response: { headers: Record<string, unknown> }): string | null {
+  const setCookie = response.headers['set-cookie'];
+  const header = Array.isArray(setCookie) ? (setCookie[0] as string) : (setCookie as string | undefined);
+  return header?.startsWith('karotto_session=') ? header.split(';')[0] ?? null : null;
+}
+
+describe(
+  'token sessions',
+  () => {
+    let token = '';
+    let tokenId = '';
+    let saved = '';
+
+    beforeAll(async () => {
+      const created = await call(
+        'POST',
+        '/user/tokens',
+        { name: 'kiosk' },
+      );
+      token = created.body?.token as string;
+      tokenId = created.body?.id as string;
+      saved = cookie;
+    });
+
+    afterAll(() => {
+      cookie = saved;
+    });
+
+    const exchange = (extraCookie = '') => {
+      cookie = extraCookie;
+      return call(
+        'POST',
+        '/auth/session',
+        undefined,
+        { authorization: `Bearer ${token}` },
+      );
+    };
+
+    const sessionCount = async () => (await handle.db.select().from(sessions).where(eq(
+      sessions.apiTokenId,
+      tokenId,
+    ))).length;
+
+    it(
+      'turns a token into a session cookie',
+      async () => {
+        const exchanged = await exchange();
+        expect(exchanged.status).toBe(200);
+        expect(exchanged.body?.username).toBe('max');
+        const kiosk = sessionCookieOf(exchanged.raw);
+        expect(kiosk).not.toBeNull();
+
+        cookie = kiosk ?? '';
+        expect((await call(
+          'GET',
+          '/auth/session',
+        )).status).toBe(200);
+        expect(await sessionCount()).toBe(1);
+      },
+    );
+
+    it(
+      'replaces the session sent along',
+      async () => {
+        const first = sessionCookieOf((await exchange()).raw) ?? '';
+        expect(await sessionCount()).toBe(2);
+        const second = sessionCookieOf((await exchange(first)).raw) ?? '';
+        expect(second).not.toBe(first);
+        expect(await sessionCount()).toBe(2);
+
+        cookie = first;
+        expect((await call(
+          'GET',
+          '/user',
+        )).status).toBe(401);
+      },
+    );
+
+    it(
+      'refuses to mint a session from a session',
+      async () => {
+        cookie = saved;
+        const { status } = await call(
+          'POST',
+          '/auth/session',
+        );
+        expect(status).toBe(401);
+      },
+    );
+
+    it(
+      'refuses an invalid token without setting a cookie',
+      async () => {
+        cookie = '';
+        const rejected = await call(
+          'POST',
+          '/auth/session',
+          undefined,
+          { authorization: 'Bearer krt_nope' },
+        );
+        expect(rejected.status).toBe(401);
+        expect(sessionCookieOf(rejected.raw)).toBeNull();
+      },
+    );
+
+    it(
+      'ends the session when the token is revoked',
+      async () => {
+        const kiosk = sessionCookieOf((await exchange()).raw) ?? '';
+        cookie = saved;
+        expect((await call(
+          'DELETE',
+          `/user/tokens/${tokenId}`,
+        )).status).toBe(200);
+        expect(await sessionCount()).toBe(0);
+
+        cookie = kiosk;
+        expect((await call(
+          'GET',
+          '/user',
+        )).status).toBe(401);
       },
     );
   },

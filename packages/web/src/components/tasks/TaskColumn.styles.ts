@@ -5,9 +5,17 @@ export const ColumnSection = twc(
   'section',
   [
     'flex',
-    'min-h-[556px]',
     'flex-col',
   ],
+  {
+    variants: {
+      display: {
+        true: ['min-h-0'],
+        false: ['min-h-[556px]'],
+      },
+    },
+    defaultVariants: { display: 'false' },
+  },
 );
 
 export const ColumnHeader = twc(
@@ -30,8 +38,20 @@ export const TaskList = twc(
     'rounded-sm',
     'bg-neutral-600',
     'p-2',
-    'pb-[30px]',
   ],
+  {
+    variants: {
+      display: {
+        true: [
+          'min-h-0',
+          'overflow-y-auto',
+          'overscroll-contain',
+        ],
+        false: ['pb-[30px]'],
+      },
+    },
+    defaultVariants: { display: 'false' },
+  },
 );
 
 export const QuickAddInput = twc(
