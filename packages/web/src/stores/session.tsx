@@ -47,7 +47,9 @@ type SessionApi = {
 
 const SessionContext = createContext<SessionApi>();
 
-export const SessionProvider: ParentComponent = (props) => {
+type SessionProviderProps = { syncTimezone: boolean };
+
+export const SessionProvider: ParentComponent<SessionProviderProps> = (props) => {
   const notifications = useNotifications();
   const [
     status,
@@ -80,7 +82,7 @@ export const SessionProvider: ParentComponent = (props) => {
 
   const syncTimezone = async (current: User) => {
     const zone = browserTimezone();
-    if (zone === current.preferences.timezone) {
+    if (!props.syncTimezone || zone === current.preferences.timezone) {
       return current;
     }
     try {

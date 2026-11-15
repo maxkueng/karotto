@@ -6,10 +6,25 @@ export const Page = twc(
   [
     'mx-auto',
     'w-full',
-    'max-w-[1140px]',
     'px-3',
-    'pt-4',
   ],
+  {
+    variants: {
+      display: {
+        true: [
+          'flex',
+          'h-full',
+          'flex-col',
+          'py-3',
+        ],
+        false: [
+          'max-w-[1140px]',
+          'pt-4',
+        ],
+      },
+    },
+    defaultVariants: { display: 'false' },
+  },
 );
 
 export const PausedBanner = twc(
@@ -74,11 +89,26 @@ export const CreateAreaMobile = twc(
 
 export const ColumnGrid = twc(
   'div',
-  [
-    'grid',
-    'grid-cols-1',
-    'gap-6',
-    'md:grid-cols-2',
-    'lg:grid-cols-3',
-  ],
+  ['grid'],
+  {
+    variants: {
+      display: {
+        true: [
+          'min-h-0',
+          'flex-1',
+          'grid-cols-3',
+          'grid-rows-1',
+          'gap-4',
+        ],
+        false: [
+          'grid-cols-1',
+          'gap-6',
+          'md:grid-cols-2',
+          'md:landscape:grid-cols-3',
+          'lg:grid-cols-3',
+        ],
+      },
+    },
+    defaultVariants: { display: 'false' },
+  },
 );

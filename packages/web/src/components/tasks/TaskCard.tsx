@@ -79,8 +79,8 @@ const PurpleArrowDown = twc(
 export type TaskCardProps = {
   task: Task;
   onScore: (direction: 'up' | 'down') => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
+  onEdit?: (() => void) | undefined;
+  onDelete?: (() => void) | undefined;
   onMoveTop?: () => void;
   onMoveBottom?: () => void;
   onToggleChecklistItem?: (itemId: string) => void;
@@ -236,12 +236,14 @@ export function TaskCard(props: TaskCardProps) {
             shape={props.task.type === 'habit' ? 'habit' : 'checkable'}
             dimmed={dimmed()}
           >
-            <ClickableArea onClick={(event) => {
-              if ((event.target as HTMLElement).closest('a')) {
-                return;
-              }
-              props.onEdit?.();
-            }}
+            <ClickableArea
+              clickable={props.onEdit !== undefined}
+              onClick={(event) => {
+                if ((event.target as HTMLElement).closest('a')) {
+                  return;
+                }
+                props.onEdit?.();
+              }}
             >
               <TitleRow
                 align="start"
