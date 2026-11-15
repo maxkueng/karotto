@@ -71,6 +71,10 @@ export const sessions = pgTable(
       { onDelete: 'cascade' },
     ),
     tokenHash: text('token_hash').notNull(),
+    apiTokenId: uuid('api_token_id').references(
+      () => apiTokens.id,
+      { onDelete: 'cascade' },
+    ),
     userAgent: text('user_agent'),
     createdAt: timestamp(
       'created_at',
@@ -88,6 +92,7 @@ export const sessions = pgTable(
   (table) => [
     uniqueIndex('sessions_token_hash_idx').on(table.tokenHash),
     index('sessions_user_idx').on(table.userId),
+    index('sessions_api_token_idx').on(table.apiTokenId),
   ],
 );
 

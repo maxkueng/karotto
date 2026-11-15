@@ -202,6 +202,14 @@ Every client takes the URL you chose above.
 - **Home Assistant:** add the Karotto integration with the URL and your
   credentials. See `docs/HOME_ASSISTANT.md`; on Home Assistant OS with
   Tailscale the Supervisor DNS needs to resolve `*.ts.net` names.
+- **Kiosk tablet** (Fully Kiosk Browser and similar): create a token with
+  `karotto-admin token create <username> --name kiosk` or in Settings, and
+  set the start URL to `<url>/#token=krt_…`. On load the page swaps the token
+  for a session cookie and removes it from the address bar; reloading the
+  start URL swaps it again and replaces the old session. Revoking the token
+  logs the tablet out. The fragment is never sent to the server, so the token
+  stays out of proxy logs, but it is readable by anyone with access to the
+  kiosk's configuration.
 
 ## Build it yourself
 

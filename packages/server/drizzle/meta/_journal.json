@@ -43,6 +43,13 @@
       "when": 1793413473145,
       "tag": "0005_last_scored",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794763812386,
+      "tag": "0006_session_api_token",
+      "breakpoints": true
     }
   ]
 }

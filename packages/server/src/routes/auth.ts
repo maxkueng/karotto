@@ -5,6 +5,7 @@ import {
   tokenLoginSchema,
   userSchema,
 } from '@karotto/core';
+import type { FastifyReply } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { SESSION_COOKIE } from '@/auth/plugin';
 import type { AppContext } from '@/context';
@@ -24,6 +25,21 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
   app,
   ctx,
 ) => {
+  const setSessionCookie = (
+    reply: FastifyReply,
+    token: string,
+  ) => reply.setCookie(
+    SESSION_COOKIE,
+    token,
+    {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: ctx.config.secureCookies,
+      maxAge: ctx.config.SESSION_TTL_DAYS * 86_400,
+    },
+  );
+
   app.post(
     '/auth/login',
     {
@@ -72,16 +88,9 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
           now,
         },
       );
-      reply.setCookie(
-        SESSION_COOKIE,
+      setSessionCookie(
+        reply,
         token,
-        {
-          path: '/',
-          httpOnly: true,
-          sameSite: 'lax',
-          secure: ctx.config.secureCookies,
-          maxAge: ctx.config.SESSION_TTL_DAYS * 86_400,
-        },
       );
       return serializeUser(
         user,
@@ -140,6 +149,58 @@ export const authRoutes: FastifyPluginAsyncZod<AppContext> = async (
       );
       reply.status(201);
       return created;
+    },
+  );
+
+  app.post(
+    '/auth/session',
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '1 minute',
+        },
+      },
+      schema: {
+        tags: ['auth'],
+        summary: 'Exchange an API token for a browser session',
+        description: 'Authenticated with `Authorization: Bearer krt_…` only. Starts a browser session bound to that token and sets the `karotto_session` cookie, replacing the session in any cookie sent along. Revoking the token ends the session. Used by kiosk devices opened with `/#token=krt_…`.',
+        response: { 200: userSchema },
+      },
+    },
+    async (
+      request,
+      reply,
+    ) => {
+      if (!request.user || request.authKind !== 'token' || !request.apiTokenId) {
+        throw ApiError.unauthorized('An API token is required');
+      }
+      const now = ctx.clock();
+      const previous = request.cookies[SESSION_COOKIE];
+      if (previous) {
+        await deleteSession(
+          ctx.db,
+          previous,
+        );
+      }
+      const token = await createSession(
+        ctx.db,
+        {
+          userId: request.user.id,
+          apiTokenId: request.apiTokenId,
+          userAgent: request.headers['user-agent'] ?? null,
+          ttlDays: ctx.config.SESSION_TTL_DAYS,
+          now,
+        },
+      );
+      setSessionCookie(
+        reply,
+        token,
+      );
+      return serializeUser(
+        request.user,
+        now,
+      );
     },
   );
 

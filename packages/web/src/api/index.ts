@@ -15,7 +15,10 @@ import type {
   TaskType,
   User,
 } from '@karotto/core';
-import { api } from '@/api/client';
+import {
+  api,
+  request,
+} from '@/api/client';
 
 export const authApi = {
   login: (input: LoginInput) => api.post<User>(
@@ -24,6 +27,12 @@ export const authApi = {
   ),
   logout: () => api.post<OkResponse>('/auth/logout'),
   session: () => api.get<User>('/auth/session'),
+  exchangeToken: (token: string) => request<User>(
+    'POST',
+    '/auth/session',
+    undefined,
+    { authorization: `Bearer ${token}` },
+  ),
 };
 
 export const userApi = {

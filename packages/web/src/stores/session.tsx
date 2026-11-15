@@ -25,6 +25,8 @@ import {
   onUnauthorized,
 } from '@/api/client';
 import { browserTimezone } from '@/lib/dates';
+import { takeHashToken } from '@/lib/hashToken';
+import { useNotifications } from '@/stores/notifications';
 
 export type SessionStatus = 'loading' | 'anonymous' | 'authenticated';
 
@@ -46,6 +48,7 @@ type SessionApi = {
 const SessionContext = createContext<SessionApi>();
 
 export const SessionProvider: ParentComponent = (props) => {
+  const notifications = useNotifications();
   const [
     status,
     setStatus,
@@ -104,8 +107,23 @@ export const SessionProvider: ParentComponent = (props) => {
     }
   };
 
+  const exchangeHashToken = async () => {
+    const token = takeHashToken();
+    if (!token) {
+      return;
+    }
+    try {
+      await authApi.exchangeToken(token);
+    } catch (error) {
+      notifications.error(
+        error,
+        'Kiosk token rejected',
+      );
+    }
+  };
+
   onMount(() => {
-    void refresh();
+    void exchangeHashToken().then(refresh);
   });
 
   onCleanup(onUnauthorized(() => {
