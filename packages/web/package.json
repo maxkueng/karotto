@@ -7,7 +7,7 @@
   "license": "GPL-3.0-only",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "NODE_ENV=production vite build",
     "preview": "vite preview",
     "typecheck": "tsc",
     "clean": "rm -rf dist",
