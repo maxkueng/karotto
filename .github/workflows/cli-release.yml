@@ -40,11 +40,25 @@ jobs:
           generate_release_notes: true
           make_latest: "false"
 
+      - name: Describe the release for karotto update
+        run: |
+          node -e '
+            const { createHash } = require("node:crypto");
+            const { readFileSync, writeFileSync } = require("node:fs");
+            const binary = "packages/cli/dist/standalone/karotto";
+            writeFileSync("packages/cli/dist/standalone/latest.json", JSON.stringify({
+              version: process.env.GITHUB_REF_NAME.slice(1),
+              sha256: createHash("sha256").update(readFileSync(binary)).digest("hex"),
+            }));
+          '
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: cli-latest
           name: karotto CLI (latest)
           body: Rolling copy of the `karotto` client from the newest `v*` release, currently ${{ github.ref_name }}.
-          files: packages/cli/dist/standalone/karotto
+          files: |
+            packages/cli/dist/standalone/karotto
+            packages/cli/dist/standalone/latest.json
           prerelease: true
           make_latest: "false"

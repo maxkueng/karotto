@@ -10,12 +10,22 @@ import { registerMcp } from '@/commands/mcp';
 import { registerScore } from '@/commands/score';
 import { registerTags } from '@/commands/tags';
 import { registerTasks } from '@/commands/tasks';
+import { registerUpdate } from '@/commands/update';
 import type { Globals } from '@/context';
 import { fail } from '@/output';
 import type { Output } from '@/output';
+import {
+  updateNotice,
+  wantsUpdateNotice,
+} from '@/update';
 import { version } from '@/version';
 
-const parser: Argv<Globals> = yargs(hideBin(process.argv))
+const args = hideBin(process.argv);
+const notice = wantsUpdateNotice(args)
+  ? updateNotice(version).catch(() => null)
+  : Promise.resolve(null);
+
+const parser: Argv<Globals> = yargs(args)
   .scriptName('karotto')
   .usage('$0 <command> [options]\n\nCommand-line client for karotto. Configure with `karotto login` or KAROTTO_URL and KAROTTO_TOKEN.')
   .option(
@@ -45,6 +55,7 @@ const registered = [
   registerEvents,
   registerMcp,
   registerApi,
+  registerUpdate,
 ].reduce(
   (
     current,
@@ -86,3 +97,8 @@ await registered
     process.stdout.columns ?? 100,
   ))
   .parseAsync();
+
+const message = await notice;
+if (message) {
+  process.stderr.write(`\n${message}\n`);
+}

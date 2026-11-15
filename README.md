@@ -188,9 +188,12 @@ curl -fsSL https://github.com/maxkueng/karotto/releases/download/cli-latest/karo
 chmod +x ~/.local/bin/karotto
 ```
 
-Re-run to update; `cli-latest` always holds the newest release. The API is
-versioned, so the client does not have to match the server release exactly.
-The Docker image ships it too.
+`karotto update` replaces it with the newest release, and interactive commands
+mention once a day when one is out (`KAROTTO_NO_UPDATE_CHECK=1` silences
+that). Install it somewhere you own, like `~/.local/bin`, so it can update
+itself; a system-wide copy needs `sudo karotto update`. The API is versioned,
+so the client does not have to match the server release exactly. The Docker
+image ships it too and is updated with the image.
 
 ```sh
 karotto login --url https://karotto.example.ts.net -u max   # stores a token in ~/.config/karotto

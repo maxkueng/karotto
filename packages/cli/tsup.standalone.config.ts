@@ -6,4 +6,8 @@ export default defineConfig({
   entry: { karotto: 'src/main.ts' },
   outDir: 'dist/standalone',
   noExternal: [/.*/],
+  define: {
+    ...shared.define,
+    KAROTTO_STANDALONE: 'true',
+  },
 });
