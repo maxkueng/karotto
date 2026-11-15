@@ -717,6 +717,26 @@ describe(
         );
         expect(daily.body?.isDue).toBe(false);
 
+        const stale = await call(
+          'POST',
+          '/cron',
+          {
+            scores: [
+              {
+                id: dailyId,
+                direction: 'up',
+              },
+            ],
+          },
+        );
+        expect(stale.body?.ran).toBe(false);
+        const unchanged = await call(
+          'GET',
+          `/tasks/${dailyId}`,
+        );
+        expect(unchanged.body?.completed).toBe(false);
+        expect(unchanged.body?.streak).toBe(1);
+
         const todos = await call(
           'GET',
           '/tasks?type=todos',

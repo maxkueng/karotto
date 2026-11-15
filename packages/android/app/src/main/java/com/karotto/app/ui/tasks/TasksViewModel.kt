@@ -24,6 +24,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -31,6 +34,7 @@ import kotlinx.coroutines.launch
 data class WelcomeBack(
     val yesterday: String,
     val dailies: List<Daily>,
+    val lastCron: String?,
     val checked: Set<String> = emptySet(),
     val running: Boolean = false,
 )
@@ -130,6 +134,14 @@ class TasksViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.settings.lastSync.collect { at -> local.update { it.copy(loaded = it.loaded || at > 0) } }
         }
+        viewModelScope.launch {
+            container.users.user.map { it?.lastCron }.distinctUntilChanged().collect { lastCron ->
+                local.update { state ->
+                    val wb = state.welcomeBack
+                    if (wb != null && lastCron != wb.lastCron) state.copy(welcomeBack = null) else state
+                }
+            }
+        }
     }
 
     fun refresh(force: Boolean = true) {
@@ -165,7 +177,8 @@ class TasksViewModel(private val container: AppContainer) : ViewModel() {
         if (dailies.isEmpty()) {
             runCron(emptyList())
         } else {
-            local.update { it.copy(welcomeBack = WelcomeBack(status.yesterday, dailies)) }
+            val lastCron = container.users.user.first()?.lastCron
+            local.update { it.copy(welcomeBack = WelcomeBack(status.yesterday, dailies, lastCron)) }
         }
     }
 

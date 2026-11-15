@@ -10,6 +10,7 @@ import {
   createEffect,
   createSignal,
   For,
+  on,
   onCleanup,
   onMount,
   Show,
@@ -178,6 +179,17 @@ export function TasksPage() {
       onVisible,
     );
   });
+
+  createEffect(on(
+    () => session.user()?.lastCron,
+    () => {
+      if (yesterdailies() !== null) {
+        setYesterdailies(null);
+        idle();
+      }
+    },
+    { defer: true },
+  ));
 
   createEffect(() => {
     session.dayContext();
