@@ -167,6 +167,18 @@ export async function runCron(
       user.id,
     );
     const ctx = dayContext(fresh);
+    const pending = daysMissedSince(
+      fresh.lastCron,
+      now,
+      ctx,
+    ) > 0;
+    if (!pending) {
+      return {
+        ran: false,
+        daysMissed: 0,
+        user: fresh,
+      };
+    }
     if (input.scores.length > 0) {
       await scoreTasks(
         tx,
