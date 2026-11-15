@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.karotto.app.AppContainer
+import com.karotto.app.BuildConfig
 import com.karotto.app.data.api.ApiException
 import com.karotto.app.data.api.NetworkException
 import com.karotto.app.data.sync.SyncManager
@@ -61,6 +62,7 @@ data class TasksState(
     val pendingCount: Int = 0,
     val loaded: Boolean = false,
     val welcomeBack: WelcomeBack? = null,
+    val serverOutdated: Boolean = false,
     val notice: Notice? = null,
     val haptics: Boolean = true,
 ) {
@@ -131,6 +133,11 @@ class TasksViewModel(private val container: AppContainer) : ViewModel() {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TasksState())
 
     init {
+        viewModelScope.launch {
+            container.api.serverApiRevision.collect { revision ->
+                local.update { it.copy(serverOutdated = revision != null && revision < BuildConfig.API_REVISION) }
+            }
+        }
         viewModelScope.launch {
             container.settings.lastSync.collect { at -> local.update { it.copy(loaded = it.loaded || at > 0) } }
         }

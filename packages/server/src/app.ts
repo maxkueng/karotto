@@ -5,6 +5,10 @@ import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import {
+  API_REVISION,
+  API_REVISION_HEADER,
+} from '@karotto/core';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
@@ -49,6 +53,19 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
     trustProxy: ctx.config.TRUST_PROXY,
     bodyLimit: 1_048_576,
   });
+
+  app.addHook(
+    'onRequest',
+    async (
+      _request,
+      reply,
+    ) => {
+      void reply.header(
+        API_REVISION_HEADER,
+        String(API_REVISION),
+      );
+    },
+  );
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);

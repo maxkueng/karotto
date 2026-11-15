@@ -134,6 +134,7 @@ fun TasksScreen(
                 onClearCompleted = viewModel::clearCompleted,
             )
             if (state.offline) ConnectionBanner(state.pendingCount)
+            if (state.serverOutdated) OutdatedServerBanner()
             if (state.user?.preferences?.paused == true) PausedBanner()
             if (wide) {
                 Row(Modifier.weight(1f).padding(horizontal = 8.dp)) {
@@ -321,6 +322,26 @@ private fun PausedBanner() {
         Icon(Icons.Rounded.Pause, contentDescription = null, tint = colors.textTitle, modifier = Modifier.size(18.dp))
         Text(
             text = "Paused. Missed dailies and to-dos are not penalised until you resume in Settings.",
+            fontSize = 14.sp,
+            color = colors.textTitle,
+            modifier = Modifier.padding(start = 10.dp),
+        )
+    }
+}
+
+@Composable
+private fun OutdatedServerBanner() {
+    val colors = KarottoTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.contentBackgroundOffset)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.Warning, contentDescription = null, tint = colors.textTitle, modifier = Modifier.size(18.dp))
+        Text(
+            text = "The server is older than this app. Some features may not work until it is updated.",
             fontSize = 14.sp,
             color = colors.textTitle,
             modifier = Modifier.padding(start = 10.dp),

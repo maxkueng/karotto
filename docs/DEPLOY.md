@@ -95,8 +95,8 @@ database long after the last backup.
 
 | Tag | What |
 |---|---|
-| `latest` | Newest release |
-| `0.3.0`, `0.3` | A specific release, or its newest patch |
+| `latest` | Newest server release |
+| `0.3.0`, `0.3` | A specific server release (`server-v0.3.0`), or its newest patch |
 | `edge` | Every push to `master`. Fine for trying things, not for keeping |
 
 Pin `KAROTTO_VERSION` if you want every version change to be an explicit

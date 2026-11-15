@@ -7,6 +7,8 @@ plugins {
 
 val releaseKeystore = System.getenv("KAROTTO_KEYSTORE")?.let(::file)?.takeIf { it.exists() }
 
+val apiRevision = (groovy.json.JsonSlurper().parse(rootDir.resolve("../core/src/api-revision.json")) as Map<*, *>)["revision"] as Int
+
 android {
     namespace = "com.karotto.app"
     compileSdk = 37
@@ -18,6 +20,7 @@ android {
         versionCode = System.getenv("KAROTTO_VERSION_CODE")?.toInt() ?: 1
         versionName = System.getenv("KAROTTO_VERSION_NAME") ?: "0.1.0-dev"
         resValue("string", "app_name", "karotto")
+        buildConfigField("int", "API_REVISION", "$apiRevision")
     }
 
     signingConfigs {

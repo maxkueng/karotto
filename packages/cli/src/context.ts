@@ -14,6 +14,7 @@ import {
   print,
 } from '@/output';
 import type { Output } from '@/output';
+import { observeServerRevision } from '@/server-revision';
 import type { TaskFlags } from '@/task-input';
 
 export type Globals = {
@@ -28,12 +29,17 @@ export type Context = {
 
 export function context(argv: Globals): Context {
   const connection = resolveConnection(argv.url);
+  const output: Output = { json: argv.json };
   return {
     api: new ApiClient(
       connection.url,
       connection.token,
+      (revision) => observeServerRevision(
+        revision,
+        output,
+      ),
     ),
-    output: { json: argv.json },
+    output,
   };
 }
 

@@ -1,3 +1,4 @@
+import { API_REVISION } from '@karotto/core';
 import yargs from 'yargs';
 import type { Argv } from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -10,12 +11,24 @@ import { registerMcp } from '@/commands/mcp';
 import { registerScore } from '@/commands/score';
 import { registerTags } from '@/commands/tags';
 import { registerTasks } from '@/commands/tasks';
+import { registerUpdate } from '@/commands/update';
 import type { Globals } from '@/context';
 import { fail } from '@/output';
 import type { Output } from '@/output';
+import { observedServerRevision } from '@/server-revision';
+import {
+  knownReleases,
+  updateNotice,
+  wantsUpdateNotice,
+} from '@/update';
 import { version } from '@/version';
 
-const parser: Argv<Globals> = yargs(hideBin(process.argv))
+const args = hideBin(process.argv);
+const releases = wantsUpdateNotice(args)
+  ? knownReleases().catch(() => null)
+  : Promise.resolve(null);
+
+const parser: Argv<Globals> = yargs(args)
   .scriptName('karotto')
   .usage('$0 <command> [options]\n\nCommand-line client for karotto. Configure with `karotto login` or KAROTTO_URL and KAROTTO_TOKEN.')
   .option(
@@ -45,6 +58,7 @@ const registered = [
   registerEvents,
   registerMcp,
   registerApi,
+  registerUpdate,
 ].reduce(
   (
     current,
@@ -86,3 +100,19 @@ await registered
     process.stdout.columns ?? 100,
   ))
   .parseAsync();
+
+const known = await releases;
+const serverRevision = observedServerRevision();
+const notice = known && serverRevision !== null
+  ? updateNotice(
+      known,
+      {
+        version,
+        requiresApi: API_REVISION,
+      },
+      serverRevision,
+    )
+  : null;
+if (notice) {
+  process.stderr.write(`\n${notice}\n`);
+}
