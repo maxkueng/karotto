@@ -4,10 +4,8 @@ import {
   onMount,
 } from 'solid-js';
 import type { ParentComponent } from 'solid-js';
-import {
-  BASE,
-  CLIENT_ID,
-} from '@/api/client';
+import { CLIENT_ID } from '@/api/client';
+import { transport } from '@/api/transport';
 import { useSession } from '@/stores/session';
 import { useTags } from '@/stores/tags';
 import { useTasks } from '@/stores/tasks';
@@ -21,44 +19,15 @@ export const LiveProvider: ParentComponent = (props) => {
   const tags = useTags();
 
   onMount(() => {
-    const source = new EventSource(`${BASE}/events`);
-    let interrupted = false;
-
-    const resync = () => {
-      void tasks.reload();
-      void tags.load();
-      void session.refresh();
-    };
-
-    source.addEventListener(
-      'open',
-      () => {
-        if (interrupted) {
-          interrupted = false;
-          resync();
-        }
-      },
-    );
-    source.addEventListener(
-      'error',
-      () => {
-        interrupted = true;
-      },
-    );
+    const handlers = new Map<string, (event: ServerEvent) => void>();
 
     const on = <T extends ServerEvent['type']>(
       type: T,
       handler: (event: EventOf<T>) => void,
     ) => {
-      source.addEventListener(
+      handlers.set(
         type,
-        (message: MessageEvent<string>) => {
-          const event = JSON.parse(message.data) as EventOf<T>;
-          if (event.origin === CLIENT_ID) {
-            return;
-          }
-          handler(event);
-        },
+        handler as (event: ServerEvent) => void,
       );
     };
 
@@ -90,7 +59,25 @@ export const LiveProvider: ParentComponent = (props) => {
       (event) => session.applyRemote(event.user),
     );
 
-    onCleanup(() => source.close());
+    const stop = transport().listen({
+      types: [...handlers.keys()],
+      onEvent: (
+        type,
+        event,
+      ) => {
+        const serverEvent = event as ServerEvent;
+        if (serverEvent.origin !== CLIENT_ID) {
+          handlers.get(type)?.(serverEvent);
+        }
+      },
+      onReconnect: () => {
+        void tasks.reload();
+        void tags.load();
+        void session.refresh();
+      },
+    });
+
+    onCleanup(stop);
   });
 
   return <>{props.children}</>;

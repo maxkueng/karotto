@@ -109,7 +109,10 @@ function DisplayPage() {
 export function App() {
   return (
     <NotificationsProvider>
-      <SessionProvider syncTimezone={!isDisplayPath()}>
+      <SessionProvider
+        syncTimezone={!isDisplayPath()}
+        exchangeHashToken
+      >
         <Snackbars />
         <Router>
           <Route

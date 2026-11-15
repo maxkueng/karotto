@@ -47,7 +47,10 @@ type SessionApi = {
 
 const SessionContext = createContext<SessionApi>();
 
-type SessionProviderProps = { syncTimezone: boolean };
+type SessionProviderProps = {
+  syncTimezone: boolean;
+  exchangeHashToken: boolean;
+};
 
 export const SessionProvider: ParentComponent<SessionProviderProps> = (props) => {
   const notifications = useNotifications();
@@ -110,7 +113,7 @@ export const SessionProvider: ParentComponent<SessionProviderProps> = (props) =>
   };
 
   const exchangeHashToken = async () => {
-    const token = takeHashParam('token');
+    const token = props.exchangeHashToken ? takeHashParam('token') : null;
     if (!token) {
       return;
     }
